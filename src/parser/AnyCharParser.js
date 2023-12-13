@@ -3,8 +3,6 @@ import RegExpParser from "./RegExpParser.js"
 /** @extends RegExpParser<0> */
 export default class AnyCharParser extends RegExpParser {
 
-    static isTerminal = true
-
     #dotAll
 
     /** @param {Boolean} dotAll */

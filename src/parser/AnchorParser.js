@@ -17,28 +17,12 @@ export const AnchorType = {
  */
 export default class AnchorParser extends Parser {
 
-    static isTerminal = true
-
     #type
 
     /** @param {T} type */
     constructor(type) {
         super()
         this.#type = type
-    }
-
-    /** @protected */
-    doMatchesEmpty() {
-        return true
-    }
-
-    /**
-     * @protected
-     * @param {Parser<any>[]} additionalTerminals
-     * @param {Context} context
-     */
-    doTerminalList(type, additionalTerminals, context) {
-        return [this]
     }
 
     /**

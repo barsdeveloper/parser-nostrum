@@ -25,11 +25,6 @@ export default class ChainedParser extends Parser {
         this.#fn = chained
     }
 
-    /** @protected */
-    doMatchesEmpty() {
-        return false
-    }
-
     unwrap(target = /** @type {Parser<any>} */(null)) {
         return [this.#parser]
     }

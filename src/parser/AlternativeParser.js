@@ -28,34 +28,7 @@ export default class AlternativeParser extends Parser {
         }
     }
 
-    /** @protected */
-    doMatchesEmpty() {
-        return this.#parsers.some(p => p.matchesEmpty())
-    }
-
-    /**
-     * @protected
-     * @param {Parser<any>[]} additionalTerminals
-     * @param {Context} context
-     */
-    doTerminalList(type, additionalTerminals, context) {
-        return this.#parsers
-            .flatMap(p => p.terminalList(type, additionalTerminals, context))
-            .reduce(
-                (acc, cur) => acc.some(p => p.equals(Reply.makeContext(), cur, true)) ? acc : (acc.push(cur), acc),
-                /** @type {Parser<any>[]} */([])
-            )
-    }
-
-    unwrap(target = /** @type {Parser<any>} */(null)) {
-        if (target) {
-            const result = this.#parsers.find(p =>
-                p.terminalList(Parser.TerminalType.ONLY, [target]).includes(target)
-            )
-            if (result) {
-                return [result]
-            }
-        }
+    unwrap() {
         return [...this.#parsers]
     }
 
@@ -69,32 +42,6 @@ export default class AlternativeParser extends Parser {
         const result = /** @type {AlternativeParser<T>} */(new this.Self(...parsers))
         result.#backtracking = this.#backtracking
         return result
-    }
-
-    /**
-     * @param {Parser<any>?} other
-     * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} traverse List of types to ignore and traverse even though they have isActualParser = true
-     * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @param {Parser<any>?} target Unwrap the Alternative's branch containing this parser
-     * @returns {Parser<any>}
-     */
-    withActualParser(other, traverse = [], opaque = [], target = null) {
-        if (other !== null || target === null) {
-            return super.withActualParser(other, traverse, opaque, target)
-        }
-        // It is trying to drop one of the alternatives: other is null or no target was specified
-        const isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate)
-        if (!isTraversable) {
-            return other
-        }
-        const targetChild = this.unwrap(target)?.[0]
-        if (!targetChild) {
-            return other
-        }
-        const targetIndex = this.#parsers.indexOf(targetChild)
-        const result = [...this.#parsers]
-        result.splice(targetIndex, 1)
-        return this.wrap(...result)
     }
 
     asBacktracking() {

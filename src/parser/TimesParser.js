@@ -39,24 +39,6 @@ export default class TimesParser extends Parser {
         this.#max = max
     }
 
-    /** @protected */
-    doMatchesEmpty() {
-        return this.#min === 0
-    }
-
-    /**
-     * @protected
-     * @param {Parser<any>[]} additionalTerminals
-     * @param {Context} context
-     */
-    doTerminalList(type, additionalTerminals, context) {
-        const result = this.#parser.terminalList(type, additionalTerminals, context)
-        if (this.matchesEmpty() && !result.some(p => SuccessParser.instance.equals(context, p, false))) {
-            result.push(SuccessParser.instance)
-        }
-        return result
-    }
-
     unwrap(target = /** @type {Parser<any>} */(null)) {
         return [this.#parser]
     }

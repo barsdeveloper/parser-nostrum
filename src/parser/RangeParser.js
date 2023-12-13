@@ -9,8 +9,6 @@ import StringParser from "./StringParser.js"
  */
 export default class RangeParser extends Parser {
 
-    static isTerminal = true
-
     #from
     get from() {
         return this.#from
@@ -29,15 +27,6 @@ export default class RangeParser extends Parser {
         super()
         this.#from = from
         this.#to = to
-    }
-
-    /**
-     * @protected
-     * @param {Parser<any>[]} additionalTerminals
-     * @param {Context} context
-     */
-    doTerminalList(type, additionalTerminals, context) {
-        return [this]
     }
 
     /**

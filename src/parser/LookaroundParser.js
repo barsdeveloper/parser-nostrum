@@ -35,15 +35,6 @@ export default class LookaroundParser extends Parser {
         this.#type = type
     }
 
-    /**
-     * @protected
-     * @param {Parser<any>[]} additionalTerminals
-     * @param {Context} context
-     */
-    doTerminalList(type, additionalTerminals, context) {
-        return []
-    }
-
     unwrap(target = /** @type {Parser<any>} */(null)) {
         return [this.#parser]
     }

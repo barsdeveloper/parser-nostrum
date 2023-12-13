@@ -7,7 +7,6 @@ import Reply from "../Reply.js"
  */
 export default class StringParser extends Parser {
 
-    static isTerminal = true
     static successParserInstance
 
     #value
@@ -19,35 +18,6 @@ export default class StringParser extends Parser {
     constructor(value) {
         super()
         this.#value = value
-    }
-
-    /** @protected */
-    doMatchesEmpty() {
-        return this.#value === ""
-    }
-
-    /**
-     * @protected
-     * @param {Parser<any>[]} additionalTerminals
-     * @param {Context} context
-     */
-    doTerminalList(type, additionalTerminals, context) {
-        if (this.value === "") {
-            return [StringParser.successParserInstance]
-        }
-        return [this]
-    }
-
-    /**
-     * In an alternative, this would always match parser could might
-     * @param {Parser<any>} parser
-     */
-    dominates(parser) {
-        parser = parser.actualParser()
-        if (parser instanceof StringParser) {
-            const otherValue = /** @type {String} */(parser.#value)
-            return otherValue.startsWith(this.#value)
-        }
     }
 
     /**

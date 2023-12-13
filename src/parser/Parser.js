@@ -3,24 +3,7 @@ import Reply from "../Reply.js"
 /** @template T */
 export default class Parser {
 
-    /**
-     * @readonly
-     * @enum {Number}
-     */
-    static TerminalType = {
-        STARTING: -1,
-        ONLY: 0,
-        ENDING: 1,
-    }
-
-    static isTerminal = false
     static indentation = "    "
-
-    /** @type {Boolean?} */
-    #matchesEmptyFlag
-
-    /** @type {{[k: TerminalType]: Parser<any>[]}} */
-    #starterList = {}
 
     /** @protected */
     predicate = v => this === v || v instanceof Function && this instanceof v
@@ -51,69 +34,6 @@ export default class Parser {
         this.Self = this.constructor
     }
 
-    matchesEmpty() {
-        if (this.#matchesEmptyFlag === undefined) {
-            return this.#matchesEmptyFlag = this.doMatchesEmpty()
-        }
-        return this.#matchesEmptyFlag
-    }
-
-    /**
-     * @protected
-     * @returns {Boolean}
-     */
-    doMatchesEmpty() {
-        const children = this.unwrap()
-        if (children.length === 1) {
-            return children[0].doMatchesEmpty()
-        }
-        return false
-    }
-
-    /**
-     * List of starting terminal parsers
-     * @param {TerminalType} type
-     * @param {Parser<any>[]} additionalTerminals Additional non terminal parsers that will be considered part of the starter list when encounter even though non terminals
-     */
-    terminalList(type, additionalTerminals = [], context = Reply.makeContext(null, "")) {
-        if (context.visited.has(this)) {
-            return [] // Break the infinite recursion, this.#starterList[type] will be set elsewhere in the call stack
-        }
-        const hasNonTerminals = additionalTerminals.some(v => !/** @type {typeof Parser} */(v.constructor).isTerminal)
-        if (this.#starterList[type] && !hasNonTerminals) {
-            // Memoized version
-            return this.#starterList[type]
-        }
-        context.visited.set(this, null)
-        if (additionalTerminals.includes(this) && !this.matchesEmpty()) {
-            return [this]
-        }
-        this.#starterList[type] = this.doTerminalList(type, additionalTerminals, context)
-        let result = this.#starterList[type]
-        if (hasNonTerminals) {
-            // Clear from the memoized starter list values that would not find their way in otherwise
-            this.#starterList[type] = this.#starterList[type]
-                .filter(v => /** @type {typeof Parser} */(v.constructor).isTerminal)
-        }
-        if (additionalTerminals.includes(this) && !/** @type {typeof Parser} */(this.constructor).isTerminal) {
-            result.unshift(this)
-        }
-        return result
-    }
-
-    /**
-     * @protected
-     * @param {TerminalType} type
-     * @param {Parser<any>[]} additionalTerminals
-     * @param {Context} context
-     */
-    doTerminalList(type, additionalTerminals, context) {
-        let unwrapped = this.unwrap()
-        return unwrapped?.length === 1
-            ? unwrapped[0].terminalList(type, additionalTerminals, context)
-            : []
-    }
-
 
     unwrap(target = /** @type {Parser<any>} */(null)) {
         return /** @type {Parser<T>[]} */([])
@@ -140,28 +60,26 @@ export default class Parser {
     /**
      * @param {ConstructorType<Parser<any>>[]} traverse List of types to ignore and traverse even though they have isActualParser = true
      * @param {ConstructorType<Parser<any>>[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @param {Parser<any>?} target Unwrap the Alternative's branch containing this parser
      * @returns {Parser<any>}
      */
-    actualParser(traverse = [], opaque = [], target = null) {
+    actualParser(traverse = [], opaque = []) {
         let isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate)
-        let unwrapped = isTraversable ? this.unwrap(target) : undefined
+        let unwrapped = isTraversable ? this.unwrap() : undefined
         isTraversable &&= unwrapped?.length === 1
-        return isTraversable ? unwrapped[0].actualParser(traverse, opaque, target) : this
+        return isTraversable ? unwrapped[0].actualParser(traverse, opaque) : this
     }
 
     /**
      * @param {Parser<any>?} other
      * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} traverse List of types to ignore and traverse even though they have isActualParser = true
      * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @param {Parser<any>?} target Unwrap the Alternative's branch containing this parser
      * @returns {Parser<any>}
      */
-    withActualParser(other, traverse = [], opaque = [], target = null) {
+    withActualParser(other, traverse = [], opaque = []) {
         let isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate)
-        let unwrapped = isTraversable ? this.unwrap(target) : undefined
+        let unwrapped = isTraversable ? this.unwrap() : undefined
         isTraversable &&= unwrapped?.length === 1
-        return isTraversable ? this.wrap(unwrapped[0].withActualParser(other, traverse, opaque, target)) : other
+        return isTraversable ? this.wrap(unwrapped[0].withActualParser(other, traverse, opaque)) : other
     }
 
     /**

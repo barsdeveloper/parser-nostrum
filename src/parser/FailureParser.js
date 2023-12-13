@@ -4,17 +4,7 @@ import Reply from "../Reply.js"
 /** @extends Parser<String> */
 export default class FailureParser extends Parser {
 
-    static isTerminal = true
     static instance = new FailureParser()
-
-    /**
-     * @protected
-     * @param {Parser<any>[]} additionalTerminals
-     * @param {Context} context
-     */
-    doTerminalList(type, additionalTerminals, context) {
-        return [this]
-    }
 
     /**
      * @param {Context} context
