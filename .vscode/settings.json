@@ -1,0 +1,10 @@
+{
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "javascript.format.semicolons": "remove",
+    "javascript.preferences.importModuleSpecifierEnding": "js",
+    "editor.rulers": [
+        120
+    ]
+}

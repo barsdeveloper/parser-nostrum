@@ -1,0 +1,32 @@
+{
+  "name": "regexer",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "A monadic LL(infinity) parser combinator library for javascript",
+  "main": "src/Regexer.js",
+  "scripts": {
+    "build": "rollup --config",
+    "test": "npx playwright test",
+    "playwright": "npx playwright test --ui --debug"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/barsdeveloper/regexer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/barsdeveloper/regexer/issues"
+  },
+  "homepage": "https://github.com/barsdeveloper/regexer#readme",
+  "devDependencies": {
+    "@playwright/test": "^1",
+    "@rollup/plugin-terser": "^0",
+    "http-server": "^14",
+    "playwright": "^1",
+    "rollup": "^4"
+  },
+  "dependencies": {
+  }
+}

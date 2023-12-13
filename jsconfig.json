@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "CommonJS",
+        "checkJs": true,
+    },
+    "include": [
+        "examples/**/*.js",
+        "grammars/**/*.js",
+        "src/**/*.js",
+        "src/types.js",
+        "tests/**/*.js",
+    ],
+}
