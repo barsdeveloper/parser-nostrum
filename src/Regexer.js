@@ -4,6 +4,7 @@ import FailureParser from "./parser/FailureParser.js"
 import LazyParser from "./parser/LazyParser.js"
 import LookaroundParser from "./parser/LookaroundParser.js"
 import MapParser from "./parser/MapParser.js"
+import OptionalParser from "./parser/OptionalParser.js"
 import Parser from "./parser/Parser.js"
 import RegExpParser from "./parser/RegExpParser.js"
 import Reply from "./Reply.js"
@@ -11,14 +12,12 @@ import SequenceParser from "./parser/SequenceParser.js"
 import StringParser from "./parser/StringParser.js"
 import SuccessParser from "./parser/SuccessParser.js"
 import TimesParser from "./parser/TimesParser.js"
-import OptionalParser from "./parser/OptionalParser.js"
 
 /** @template {Parser<any>} T */
 export default class Regexer {
 
     #parser
-    #optimized
-    #groups = new Map()
+
     /** @type {(new (parser: Parser<any>) => Regexer<typeof parser>) & typeof Regexer} */
     Self
 
@@ -83,29 +82,6 @@ export default class Regexer {
         // @ts-expect-error
         this.Self = this.constructor
         this.#parser = parser
-        this.#optimized = optimized
-    }
-
-    /**
-     * @template {Parser<any>} T
-     * @param {T} parser
-     */
-    static optimize(parser) {
-
-    }
-
-    /**
-     * @param {Regexer<Parser<any>> | Parser<any>} lhs
-     * @param {Regexer<Parser<any>> | Parser<any>} rhs
-     */
-    static equals(lhs, rhs, strict = false) {
-        const a = lhs instanceof Regexer ? lhs.getParser() : lhs
-        const b = rhs instanceof Regexer ? rhs.getParser() : rhs
-        return a.equals(
-            Reply.makeContext(lhs instanceof Regexer ? lhs : rhs instanceof Regexer ? rhs : null),
-            b,
-            strict
-        )
     }
 
     getParser() {

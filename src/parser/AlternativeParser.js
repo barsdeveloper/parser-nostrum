@@ -68,28 +68,6 @@ export default class AlternativeParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        if (
-            !(other instanceof AlternativeParser)
-            || this.#parsers.length != other.#parsers.length
-            || this.#backtracking !== other.#backtracking
-        ) {
-            return false
-        }
-        for (let i = 0; i < this.#parsers.length; ++i) {
-            if (!this.#parsers[i].equals(context, other.#parsers[i], strict)) {
-                return false
-            }
-        }
-        return true
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         const indentation = Parser.indentation.repeat(indent)

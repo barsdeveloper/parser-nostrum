@@ -57,23 +57,11 @@ export default class MapParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof MapParser
-            && this.#mapper === other.#mapper
-            && this.#parser.equals(context, other.#parser, strict)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         let serializedMapper = this.#mapper.toString()
-        if (serializedMapper.length > 80 || serializedMapper.includes("\n")) {
-            serializedMapper = "( ... ) => { ... }"
+        if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
+            serializedMapper = "(...) => { ... }"
         }
         return this.#parser.toString(context, indent) + ` -> map<${serializedMapper}>`
     }

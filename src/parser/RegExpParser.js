@@ -47,18 +47,6 @@ export default class RegExpParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof RegExpParser
-            && (!strict || this.#group === other.#group)
-            && this.#regexp.source === other.#regexp.source
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         return "/" + this.#regexp.source + "/"

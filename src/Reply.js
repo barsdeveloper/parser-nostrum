@@ -7,8 +7,6 @@
  * }} Result
  */
 
-import PairMap from "./utility/PairMap.js"
-
 export default class Reply {
 
     /**
@@ -41,7 +39,6 @@ export default class Reply {
         return /** @type {Context} */({
             regexer: regexer,
             input: input,
-            equals: new PairMap(),
             visited: new Map(),
         })
     }

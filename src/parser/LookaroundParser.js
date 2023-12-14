@@ -68,19 +68,6 @@ export default class LookaroundParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return this === other
-            || other instanceof LookaroundParser
-            && this.#type === other.#type
-            && this.#parser.equals(context, other.#parser, strict)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         return "(" + this.#type + this.#parser.toString(context, indent) + ")"

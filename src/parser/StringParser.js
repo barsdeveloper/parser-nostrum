@@ -35,16 +35,6 @@ export default class StringParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof StringParser && this.#value === other.#value
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         const inlined = this.value.replaceAll("\n", "\\n")

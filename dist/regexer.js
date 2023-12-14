@@ -89,11 +89,7 @@ class Reply {
 /** @template T */
 class Parser {
 
-    static isTerminal = false
     static indentation = "    "
-
-    /** @type {Boolean?} */
-    #matchesEmptyFlag
 
     /** @protected */
     predicate = v => this === v || v instanceof Function && this instanceof v
@@ -150,28 +146,26 @@ class Parser {
     /**
      * @param {ConstructorType<Parser<any>>[]} traverse List of types to ignore and traverse even though they have isActualParser = true
      * @param {ConstructorType<Parser<any>>[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @param {Parser<any>?} target Unwrap the Alternative's branch containing this parser
      * @returns {Parser<any>}
      */
-    actualParser(traverse = [], opaque = [], target = null) {
+    actualParser(traverse = [], opaque = []) {
         let isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate);
-        let unwrapped = isTraversable ? this.unwrap(target) : undefined;
+        let unwrapped = isTraversable ? this.unwrap() : undefined;
         isTraversable &&= unwrapped?.length === 1;
-        return isTraversable ? unwrapped[0].actualParser(traverse, opaque, target) : this
+        return isTraversable ? unwrapped[0].actualParser(traverse, opaque) : this
     }
 
     /**
      * @param {Parser<any>?} other
      * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} traverse List of types to ignore and traverse even though they have isActualParser = true
      * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @param {Parser<any>?} target Unwrap the Alternative's branch containing this parser
      * @returns {Parser<any>}
      */
-    withActualParser(other, traverse = [], opaque = [], target = null) {
+    withActualParser(other, traverse = [], opaque = []) {
         let isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate);
-        let unwrapped = isTraversable ? this.unwrap(target) : undefined;
+        let unwrapped = isTraversable ? this.unwrap() : undefined;
         isTraversable &&= unwrapped?.length === 1;
-        return isTraversable ? this.wrap(unwrapped[0].withActualParser(other, traverse, opaque, target)) : other
+        return isTraversable ? this.wrap(unwrapped[0].withActualParser(other, traverse, opaque)) : other
     }
 
     /**
@@ -242,7 +236,6 @@ class Parser {
  */
 class StringParser extends Parser {
 
-    static isTerminal = true
     static successParserInstance
 
     #value
@@ -503,7 +496,6 @@ class ChainedParser extends Parser {
 /** @extends Parser<String> */
 class FailureParser extends Parser {
 
-    static isTerminal = true
     static instance = new FailureParser()
 
     /**
@@ -780,8 +772,6 @@ class MapParser extends Parser {
  * @extends {Parser<Group extends -1 ? RegExpExecArray : String>}
  */
 class RegExpParser extends Parser {
-
-    static isTerminal = true
 
     /** @type {RegExp} */
     #regexp

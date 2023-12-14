@@ -1,87 +1,91 @@
 import { test, expect } from "@playwright/test"
-import EscapedCharParser from "../src/parser/EscapedCharParser.js"
-import RegExpGrammar, { R } from "../src/grammars/RegExpGrammar.js"
+import R from "../src/Regexer.js"
 
-test("Test 1", async ({ page }) => {
-    expect(R.escapedChar("\x41", EscapedCharParser.Type.HEX).toString()).toEqual(String.raw`\x41`)
+test("Test String", async ({ page }) => {
+    expect(R.str("a").toString()).toEqual("a")
+    expect(R.str("alpha").toString()).toEqual('"alpha"')
+    expect(R.str(" ").toString()).toEqual('" "')
+    expect(R.str("   beta ").toString()).toEqual('"   beta "')
 })
 
-test("Test 2", async ({ page }) => {
-    expect(R.escapedChar("\n", EscapedCharParser.Type.NORMAL).toString()).toEqual(String.raw`\n`)
+test("Test Regexp", async ({ page }) => {
+    let regexp = /^(?:[A-Z][a-z]+\ )+/
+    expect(R.regexp(regexp).toString()).toEqual(`/${regexp.source}/`)
+    regexp = /[\!@#$%^&*()\\[\]{}\-_+=~`|:;"'<>,./?]/
+    expect(R.regexp(regexp).toString()).toEqual(`/${regexp.source}/`)
 })
 
-test("Test 3", async ({ page }) => {
-    expect(R.escapedChar("\u0042", EscapedCharParser.Type.UNICODE).toString()).toEqual(String.raw`\u0042`)
+test("Test Chained", async ({ page }) => {
+    expect(R.str("a").chain(() => R.str("b")).toString()).toEqual("a => chained<f()>")
+    expect(R.str("alpha").chain(() => R.str("b")).toString()).toEqual('"alpha" => chained<f()>')
 })
 
-test("Test 4", async ({ page }) => {
-    expect(R.class(R.range(R.escapedChar("\b"), R.str("z"))).toString()).toEqual(String.raw`[\b-z]`)
+test("Test Times", async ({ page }) => {
+    expect(R.str("a string").atLeast(1).toString()).toEqual('"a string"+')
+    expect(R.regexp(/\d+\ /).many().toString()).toEqual("/\\d+\\ /*")
+    expect(R.str(" ").opt().toString()).toEqual('" "?')
+    expect(R.str("word").atMost(5).toString()).toEqual('"word"{0,5}')
+    expect(R.regexp(/[abc]/).times(2).toString()).toEqual('/[abc]/{2}')
 })
 
-test("Test 5", async ({ page }) => {
-    expect(R.class(R.range(R.escapedChar("\b"), R.str("z"))).toString()).toEqual(String.raw`[\b-z]`)
+test("Test Map", async ({ page }) => {
+    expect(R.str("value").map(v => 123).toString()).toEqual('"value" -> map<v => 123>')
+    expect(R.str("str").map(v => "Returns a very very very very very medium string").toString())
+        .toEqual('"str" -> map<v => "Returns a very very very very very medium string">')
+    expect(R.str("str").map(v => "Returns a very very very very very very very very string").toString())
+        .toEqual('"str" -> map<(...) => { ... }>')
 })
 
-test("Test 6", async ({ page }) => {
-    expect(RegExpGrammar.regexp.parse(/^(?:[A-Z][a-z]+\ )+/.source).toString(2, true)).toEqual(String.raw`
-        SEQ<
-            ^
-            (?:SEQ<
-                [A-Z]
-                [a-z]+
-                \" "
-            >)+
+test("Test Alternative", async ({ page }) => {
+    expect(R.alt(R.str("apple"), R.lazy(() => R.str("b")), R.str("charlie").times(5)).toString(2, true)).toEqual(`
+        ALT<
+            "apple"
+            | b
+            | "charlie"{5}
         >`
     )
 })
 
-test("Test 7", async ({ page }) => {
-    expect(R.alt(R.str("alpha"), R.seq(R.str("beta"), R.str("gamma").many()).atLeast(1)).toString(2, true)).toEqual(`
+test("Test Sequence", async ({ page }) => {
+    const g = R.seq(R.str("a").opt(), R.lazy(() => R.str("bravo")), R.str("c"))
+    expect(g.toString(2, true)).toEqual(`
+        SEQ<
+            a?
+            "bravo"
+            c
+        >`
+    )
+})
+
+test("Test 1", async ({ page }) => {
+    expect(R.alt(
+        R.str("alpha"),
+        R.seq(
+            R.str("beta").map(v => v + 1).opt(),
+            R.str("gamma").many()
+        ).atLeast(1)
+    ).toString(2, true)).toEqual(`
         ALT<
             "alpha"
             | SEQ<
-                "beta"
+                "beta" -> map<v => v + 1>?
                 "gamma"*
             >+
         >`
     )
 })
 
-test("Test 8", async ({ page }) => {
-    expect(RegExpGrammar.regexp.parse(/[\!@#$%^&*()\\[\]{}\-_+=~`|:;"'<>,./?]/.source).toString()).toEqual(
-        /[\!@#$%^&*()\\[\]{}\-_+=~`|:;"'<>,./?]/.source
+test("Test 2", async ({ page }) => {
+    const g = R.alt(
+        R.str("a"),
+        R.str("b"),
+        R.lazy(() => g).opt().map(() => 123)
     )
-})
-
-test("Test 9", async ({ page }) => {
-    class Grammar {
-        /** @type {Regexer<Parser<any>>} */
-        static rule = R.seq(R.str("a").opt(), R.lazy(() => Grammar.rule))
-    }
-    expect(Grammar.rule.toString(2, true)).toEqual(`
-        SEQ<
-            a?
-            <...>
-        >`
-    )
-})
-
-test("Test 10", async ({ page }) => {
-    class Grammar {
-        /** @type {Regexer<Parser<any>>} */
-        static rule = R.grp(
-            R.alt(
-                R.str("a"),
-                R.str("b"),
-                R.lazy(() => Grammar.rule).opt().map(() => 123)
-            )
-        )
-    }
-    expect(Grammar.rule.toString(2, true)).toEqual(`
-        (ALT<
+    expect(g.toString(2, true)).toEqual(`
+        ALT<
             a
             | b
             | <...>? -> map<() => 123>
-        >)`
+        >`
     )
 })

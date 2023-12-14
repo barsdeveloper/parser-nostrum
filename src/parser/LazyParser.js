@@ -52,25 +52,6 @@ export default class LazyParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        if (other instanceof LazyParser) {
-            if (this.#parser === other.#parser) {
-                return true
-            }
-            other = other.resolve()
-        } else if (strict) {
-            return false
-        }
-        this.resolve()
-        return this.#resolvedPraser.equals(context, other, strict)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         return this.resolve().toString(context, indent)

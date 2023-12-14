@@ -84,20 +84,6 @@ export default class TimesParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof TimesParser
-            && this.#backtracking === other.#backtracking
-            && this.#min === other.#min
-            && this.#max === other.#max
-            && this.#parser.equals(context, other.#parser, strict)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         return this.parser.toString(context, indent)
@@ -107,7 +93,7 @@ export default class TimesParser extends Parser {
                         : this.#min === 1 && this.#max === Number.POSITIVE_INFINITY ? "+"
                             : "{"
                             + this.#min
-                            + (this.#min !== this.#max ? "," : this.#max !== Number.POSITIVE_INFINITY ? this.#max : "")
+                            + (this.#min !== this.#max ? "," + this.#max : "")
                             + "}"
             )
     }

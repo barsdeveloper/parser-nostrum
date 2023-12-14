@@ -82,51 +82,6 @@ export default class Parser {
         return isTraversable ? this.wrap(unwrapped[0].withActualParser(other, traverse, opaque)) : other
     }
 
-    /**
-     * @param {Context} context
-     * @param {Parser<any>} rhs
-     * @param {Boolean} strict
-     */
-    equals(context, rhs, strict) {
-        let lhs = /** @type {Parser<any>} */(this)
-        if (lhs === rhs) {
-            return true
-        }
-        if (!strict) {
-            lhs = this.actualParser()
-            rhs = rhs.actualParser()
-        }
-        if (
-            rhs instanceof lhs.constructor && !(lhs instanceof rhs.constructor)
-            // @ts-expect-error
-            || rhs.resolve && !lhs.resolve
-        ) {
-            // Take advantage of polymorphism or compare a lazy against a non lazy (not the other way around)
-            const temp = lhs
-            lhs = rhs
-            rhs = temp
-        }
-        let memoized = context.equals.get(lhs, rhs)
-        if (memoized !== undefined) {
-            return memoized
-        } else if (memoized === undefined) {
-            context.equals.set(lhs, rhs, true)
-            memoized = lhs.doEquals(context, rhs, strict)
-            context.equals.set(lhs, rhs, memoized)
-        }
-        return memoized
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return false
-    }
-
     toString(context = Reply.makeContext(null, ""), indent = 0) {
         if (context.visited.has(this)) {
             return "<...>" // Recursive parser
