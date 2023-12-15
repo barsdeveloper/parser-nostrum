@@ -1,43 +1,43 @@
 import { test, expect } from "@playwright/test"
-import R from "../src/Regexer.js"
+import P from "../src/Parsernostrum.js"
 
 test("Test String", async ({ page }) => {
-    expect(R.str("a").toString()).toEqual("a")
-    expect(R.str("alpha").toString()).toEqual('"alpha"')
-    expect(R.str(" ").toString()).toEqual('" "')
-    expect(R.str("   beta ").toString()).toEqual('"   beta "')
+    expect(P.str("a").toString()).toEqual("a")
+    expect(P.str("alpha").toString()).toEqual('"alpha"')
+    expect(P.str(" ").toString()).toEqual('" "')
+    expect(P.str("   beta ").toString()).toEqual('"   beta "')
 })
 
 test("Test Regexp", async ({ page }) => {
     let regexp = /^(?:[A-Z][a-z]+\ )+/
-    expect(R.regexp(regexp).toString()).toEqual(`/${regexp.source}/`)
+    expect(P.regexp(regexp).toString()).toEqual(`/${regexp.source}/`)
     regexp = /[\!@#$%^&*()\\[\]{}\-_+=~`|:;"'<>,./?]/
-    expect(R.regexp(regexp).toString()).toEqual(`/${regexp.source}/`)
+    expect(P.regexp(regexp).toString()).toEqual(`/${regexp.source}/`)
 })
 
 test("Test Chained", async ({ page }) => {
-    expect(R.str("a").chain(() => R.str("b")).toString()).toEqual("a => chained<f()>")
-    expect(R.str("alpha").chain(() => R.str("b")).toString()).toEqual('"alpha" => chained<f()>')
+    expect(P.str("a").chain(() => P.str("b")).toString()).toEqual("a => chained<f()>")
+    expect(P.str("alpha").chain(() => P.str("b")).toString()).toEqual('"alpha" => chained<f()>')
 })
 
 test("Test Times", async ({ page }) => {
-    expect(R.str("a string").atLeast(1).toString()).toEqual('"a string"+')
-    expect(R.regexp(/\d+\ /).many().toString()).toEqual("/\\d+\\ /*")
-    expect(R.str(" ").opt().toString()).toEqual('" "?')
-    expect(R.str("word").atMost(5).toString()).toEqual('"word"{0,5}')
-    expect(R.regexp(/[abc]/).times(2).toString()).toEqual('/[abc]/{2}')
+    expect(P.str("a string").atLeast(1).toString()).toEqual('"a string"+')
+    expect(P.regexp(/\d+\ /).many().toString()).toEqual("/\\d+\\ /*")
+    expect(P.str(" ").opt().toString()).toEqual('" "?')
+    expect(P.str("word").atMost(5).toString()).toEqual('"word"{0,5}')
+    expect(P.regexp(/[abc]/).times(2).toString()).toEqual('/[abc]/{2}')
 })
 
 test("Test Map", async ({ page }) => {
-    expect(R.str("value").map(v => 123).toString()).toEqual('"value" -> map<v => 123>')
-    expect(R.str("str").map(v => "Returns a very very very very very medium string").toString())
+    expect(P.str("value").map(v => 123).toString()).toEqual('"value" -> map<v => 123>')
+    expect(P.str("str").map(v => "Returns a very very very very very medium string").toString())
         .toEqual('"str" -> map<v => "Returns a very very very very very medium string">')
-    expect(R.str("str").map(v => "Returns a very very very very very very very very string").toString())
+    expect(P.str("str").map(v => "Returns a very very very very very very very very string").toString())
         .toEqual('"str" -> map<(...) => { ... }>')
 })
 
 test("Test Alternative", async ({ page }) => {
-    expect(R.alt(R.str("apple"), R.lazy(() => R.str("b")), R.str("charlie").times(5)).toString(2, true)).toEqual(`
+    expect(P.alt(P.str("apple"), P.lazy(() => P.str("b")), P.str("charlie").times(5)).toString(2, true)).toEqual(`
         ALT<
             "apple"
             | b
@@ -47,7 +47,7 @@ test("Test Alternative", async ({ page }) => {
 })
 
 test("Test Sequence", async ({ page }) => {
-    const g = R.seq(R.str("a").opt(), R.lazy(() => R.str("bravo")), R.str("c"))
+    const g = P.seq(P.str("a").opt(), P.lazy(() => P.str("bravo")), P.str("c"))
     expect(g.toString(2, true)).toEqual(`
         SEQ<
             a?
@@ -58,11 +58,11 @@ test("Test Sequence", async ({ page }) => {
 })
 
 test("Test 1", async ({ page }) => {
-    expect(R.alt(
-        R.str("alpha"),
-        R.seq(
-            R.str("beta").map(v => v + 1).opt(),
-            R.str("gamma").many()
+    expect(P.alt(
+        P.str("alpha"),
+        P.seq(
+            P.str("beta").map(v => v + 1).opt(),
+            P.str("gamma").many()
         ).atLeast(1)
     ).toString(2, true)).toEqual(`
         ALT<
@@ -76,20 +76,20 @@ test("Test 1", async ({ page }) => {
 })
 
 test("Test 2", async ({ page }) => {
-    const g = R.lazy(() => R.lazy(() => R.seq(
-        R.str("Italy"),
-        R.lazy(() => R.regexp(/Switzerland/).chain(v => R.optWhitespace)),
-        R.alt(
-            R.str("Austria").map(() => 123),
-            R.alt(
-                R.str("Belgium").map(v => "abc"),
-                R.lazy(() => R.regexpGroups(/Spain/)),
+    const g = P.lazy(() => P.lazy(() => P.seq(
+        P.str("Italy"),
+        P.lazy(() => P.regexp(/Switzerland/).chain(v => P.optWhitespace)),
+        P.alt(
+            P.str("Austria").map(() => 123),
+            P.alt(
+                P.str("Belgium").map(v => "abc"),
+                P.lazy(() => P.regexpGroups(/Spain/)),
             ),
-            R.str("Poland"),
-            R.str("Portugal").map(() => { }),
+            P.str("Poland"),
+            P.str("Portugal").map(() => { }),
         ),
-        R.regexp(/(Romania)/, 1),
-        R.str("Netherlands").map(() => "xyz")
+        P.regexp(/(Romania)/, 1),
+        P.str("Netherlands").map(() => "xyz")
     )))
     expect(g.toString(2, true)).toEqual(`
         SEQ<

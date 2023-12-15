@@ -34,10 +34,10 @@ export default class Reply {
         })
     }
 
-    /** @param {Regexer<Parser<any>>} regexer */
-    static makeContext(regexer = null, input = "") {
+    /** @param {Parsernostrum<Parser<any>>} parsernostrum */
+    static makeContext(parsernostrum = null, input = "") {
         return /** @type {Context} */({
-            regexer: regexer,
+            parsernostrum: parsernostrum,
             input: input,
             visited: new Map(),
         })

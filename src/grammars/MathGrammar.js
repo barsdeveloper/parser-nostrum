@@ -1,6 +1,6 @@
-import Regexer from "../Regexer.js"
+import Parsernostrum from "../Parsernostrum.js"
 
-const R = Regexer
+const P = Parsernostrum
 
 export default class MathGrammar {
 
@@ -34,39 +34,39 @@ export default class MathGrammar {
         return numbers.pop()
     }
 
-    static #number = R.number.map(v => Number(v))
+    static #number = P.number.map(v => Number(v))
 
-    static #opFragment = R.lazy(() =>
-        R.seq(
-            R.optWhitespace,
-            R.alt(
-                R.str("^").map(() => ({
+    static #opFragment = P.lazy(() =>
+        P.seq(
+            P.optWhitespace,
+            P.alt(
+                P.str("^").map(() => ({
                     precedence: 20,
                     rightAssociative: true,
                     function: (a, b) => Math.pow(a, b),
                 })),
-                R.str("*").map(() => ({
+                P.str("*").map(() => ({
                     precedence: 10,
                     rightAssociative: false,
                     function: (a, b) => a * b,
                 })),
-                R.str("/").map(() => ({
+                P.str("/").map(() => ({
                     precedence: 10,
                     rightAssociative: false,
                     function: (a, b) => a / b,
                 })),
-                R.str("+").map(() => ({
+                P.str("+").map(() => ({
                     precedence: 0,
                     rightAssociative: false,
                     function: (a, b) => a + b,
                 })),
-                R.str("-").map(() => ({
+                P.str("-").map(() => ({
                     precedence: 0,
                     rightAssociative: false,
                     function: (a, b) => a - b,
                 })),
             ).map(v => v),
-            R.optWhitespace,
+            P.optWhitespace,
             MathGrammar.expressionFragment,
         )
             .map(([_0, operator, _2, expressionFragment]) => [operator, ...expressionFragment])
@@ -74,20 +74,20 @@ export default class MathGrammar {
             .map(values => values.flatMap(v => v)),
     )
 
-    static #termFragment = R.lazy(() =>
-        R.alt(
+    static #termFragment = P.lazy(() =>
+        P.alt(
             MathGrammar.#number.map(v => [v]),
-            R.seq(
-                R.str("("),
-                R.optWhitespace,
-                R.lazy(() => MathGrammar.expressionFragment),
-                R.optWhitespace,
-                R.str(")"),
+            P.seq(
+                P.str("("),
+                P.optWhitespace,
+                P.lazy(() => MathGrammar.expressionFragment),
+                P.optWhitespace,
+                P.str(")"),
             ).map(([_0, _1, entries]) => [this.#evaluate(entries)])
         ))
 
-    static expressionFragment = R.alt(
-        R.seq(
+    static expressionFragment = P.alt(
+        P.seq(
             MathGrammar.#termFragment,
             MathGrammar.#opFragment
         ).map(([term, fragment]) => [...term, ...fragment]),

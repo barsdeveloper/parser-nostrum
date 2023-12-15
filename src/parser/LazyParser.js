@@ -11,7 +11,7 @@ export default class LazyParser extends Parser {
     /** @type {T} */
     #resolvedPraser
 
-    /** @param {() => Regexer<T>} parser */
+    /** @param {() => Parsernostrum<T>} parser */
     constructor(parser) {
         super()
         this.#parser = parser
@@ -33,10 +33,10 @@ export default class LazyParser extends Parser {
      * @param {P} parsers
      */
     wrap(...parsers) {
-        const regexerConstructor = /** @type {ConstructorType<Regexer<typeof parsers[0]>>} */(
+        const parsernostrumConstructor = /** @type {ConstructorType<Parsernostrum<typeof parsers[0]>>} */(
             this.#parser().constructor
         )
-        return new LazyParser(() => new regexerConstructor(parsers[0]))
+        return new LazyParser(() => new parsernostrumConstructor(parsers[0]))
     }
 
     /**

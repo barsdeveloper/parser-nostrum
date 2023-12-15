@@ -1,6 +1,5 @@
 import Parser from "./Parser.js"
 import Reply from "../Reply.js"
-import SuccessParser from "./SuccessParser.js"
 
 /**
  * @template {Parser<any>} T

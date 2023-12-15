@@ -2,7 +2,7 @@ import Parser from "./Parser.js"
 import Reply from "../Reply.js"
 
 /** @template {Parser<any>} T */
-export default class LookaroundParser extends Parser {
+export default class Lookahead extends Parser {
 
     #parser
     get parser() {
@@ -44,7 +44,7 @@ export default class LookaroundParser extends Parser {
      * @param {P} parsers
      */
     wrap(...parsers) {
-        return new LookaroundParser(parsers[0], this.#type)
+        return new Lookahead(parsers[0], this.#type)
     }
 
     /**
@@ -53,13 +53,13 @@ export default class LookaroundParser extends Parser {
      */
     parse(context, position) {
         if (
-            this.#type === LookaroundParser.Type.NEGATIVE_BEHIND
-            || this.#type === LookaroundParser.Type.POSITIVE_BEHIND
+            this.#type === Lookahead.Type.NEGATIVE_BEHIND
+            || this.#type === Lookahead.Type.POSITIVE_BEHIND
         ) {
             throw new Error("Lookbehind is not implemented yet")
         } else {
             const result = this.#parser.parse(context, position)
-            return result.status == (this.#type === LookaroundParser.Type.POSITIVE_AHEAD)
+            return result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
                 ? Reply.makeSuccess(position, "")
                 : Reply.makeFailure(position)
         }

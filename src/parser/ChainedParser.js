@@ -3,7 +3,7 @@ import Reply from "../Reply.js"
 
 /**
  * @template {Parser<any>} T
- * @template {(v: ParserValue<T>, input: String, position: Number) => Regexer<Parser<any>>} C
+ * @template {(v: ParserValue<T>, input: String, position: Number) => Parsernostrum<Parser<any>>} C
  * @extends Parser<ReturnType<C>>
  */
 export default class ChainedParser extends Parser {

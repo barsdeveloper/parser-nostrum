@@ -1,5 +1,3 @@
-import Parser from "./Parser.js"
-import Reply from "../Reply.js"
 import StringParser from "./StringParser.js"
 
 /** @extends StringParser<""> */

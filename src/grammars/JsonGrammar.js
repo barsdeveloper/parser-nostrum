@@ -1,36 +1,36 @@
 import Parser from "../parser/Parser.js"
-import Regexer from "../Regexer.js"
+import Parsernostrum from "../Parsernostrum.js"
 
-const R = Regexer
+const P = Parsernostrum
 
 export default class JsonGrammar {
 
-    static #null = R.str("null").map(() => null)
-    static #true = R.str("true").map(() => true)
-    static #false = R.str("false").map(() => false)
-    static #string = R.doubleQuotedString
-    static #number = R.numberExponential
-    /** @type {Regexer<Parser<any[]>>} */
-    static #array = R.seq(
-        R.regexp(/\[\s*/),
-        R.lazy(() => this.json).sepBy(R.regexp(/\s*,\s*/)),
-        R.regexp(/\s*\]/)
+    static #null = P.str("null").map(() => null)
+    static #true = P.str("true").map(() => true)
+    static #false = P.str("false").map(() => false)
+    static #string = P.doubleQuotedString
+    static #number = P.numberExponential
+    /** @type {Parsernostrum<Parser<any[]>>} */
+    static #array = P.seq(
+        P.regexp(/\[\s*/),
+        P.lazy(() => this.json).sepBy(P.regexp(/\s*,\s*/)),
+        P.regexp(/\s*\]/)
     ).map(([_0, values, _2]) => values)
-    /** @type {Regexer<Parser<Object>>} */
-    static #object = R.seq(
-        R.regexp(/\{\s*/),
-        R.seq(
+    /** @type {Parsernostrum<Parser<Object>>} */
+    static #object = P.seq(
+        P.regexp(/\{\s*/),
+        P.seq(
             this.#string,
-            R.regexp(/\s*:\s*/),
-            R.lazy(() => this.json),
+            P.regexp(/\s*:\s*/),
+            P.lazy(() => this.json),
         )
             .map(([k, _1, v]) => ({ [k]: v }))
-            .sepBy(R.regexp(/\s*,\s*/))
+            .sepBy(P.regexp(/\s*,\s*/))
             .map(v => v.reduce((acc, cur) => ({ ...acc, ...cur }), ({}))),
-        R.regexp(/\s*}/)
+        P.regexp(/\s*}/)
     ).map(([_0, object, _2]) => object)
 
-    static json = R.alt(
+    static json = P.alt(
         this.#string,
         this.#number,
         this.#object,

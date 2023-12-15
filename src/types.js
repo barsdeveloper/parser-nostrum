@@ -17,11 +17,11 @@
 
 /**
  * @template T
- * @typedef {import("./Regexer.js").default<T>} Regexer
+ * @typedef {import("./Parsernostrum.js").Parsernostrum<T>} Parsernostrum
  */
 
 /**
- * @typedef {typeof import("./Regexer.js").default} RegexerClass
+ * @typedef {typeof import("./Parsernostrum.js").Parsernostrum} ParsernostrumClass
  */
 
 /**
@@ -47,7 +47,7 @@
 
 /**
  * @typedef {{
- *     regexer: Regexer,
+ *     parsernostrum: Parsernostrum,
  *     input: String,
  *     visited: Map<Parser<any>, any>,
  * }} Context
@@ -60,13 +60,13 @@
  *     : T extends import("./parser/RegExpParser.js").default<-1> ? RegExpExecArray
  *     : T extends import("./parser/SequenceParser.js").default<infer P> ? ParserValue<P>
  *     : T extends import("./parser/StringParser.js").default<infer S> ? S
- *     : T extends import("./parser/MapParser.js").default<any, infer R> ? R
+ *     : T extends import("./parser/MapParser.js").default<any, infer P> ? P
  *     : T extends import("./parser/AlternativeParser.js").default<infer P> ? UnionFromArray<ParserValue<P>>
  *     : T extends import("./parser/LazyParser.js").default<infer P> ? ParserValue<P>
  *     : T extends import("./parser/RegExpParser.js").default<any> ? String
  *     : T extends import("./parser/TimesParser.js").default<infer P> ? ParserValue<P>[]
  *     : T extends import("./parser/Parser.js").default<infer V> ? V
- *     : T extends import("./parser/LookaroundParser.js/index.js").LookaroundParser ? ""
+ *     : T extends import("./parser/Lookahead.js/index.js").Lookahead ? ""
  *     : never
  * } ParserValue
  */
@@ -74,9 +74,9 @@
 /**
  * @template T
  * @typedef {T extends [] ? []
- *     : T extends [infer R] ? [UnwrapParser<R>]
- *     : T extends [infer R, ...infer Rest] ? [UnwrapParser<R>, ...UnwrapParser<Rest>]
- *     : T extends import("./Regexer.js").default<infer P> ? P
+ *     : T extends [infer P] ? [UnwrapParser<P>]
+ *     : T extends [infer P, ...infer Rest] ? [UnwrapParser<P>, ...UnwrapParser<Rest>]
+ *     : T extends import("./Parsernostrum.js").Parsernostrum<infer P> ? P
  *     : Parser<any>
  * } UnwrapParser
  */

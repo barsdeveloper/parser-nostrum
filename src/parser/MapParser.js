@@ -1,9 +1,9 @@
 import Parser from "./Parser.js"
 
 /**
- * @template {Parser<any>} P
- * @template R
- * @extends Parser<R>
+ * @template {Parser<any>} T
+ * @template P
+ * @extends Parser<P>
  */
 export default class MapParser extends Parser {
 
@@ -18,8 +18,8 @@ export default class MapParser extends Parser {
     }
 
     /**
-     * @param {P} parser
-     * @param {(v: ParserValue<P>) => R} mapper
+     * @param {T} parser
+     * @param {(v: ParserValue<P>) => P} mapper
      */
     constructor(parser, mapper) {
         super()
@@ -42,7 +42,7 @@ export default class MapParser extends Parser {
     /**
      * @param {Context} context
      * @param {Number} position
-     * @returns {Result<R>}
+     * @returns {Result<P>}
      */
     parse(context, position) {
         const result = this.#parser.parse(context, position)
