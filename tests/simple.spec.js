@@ -212,16 +212,16 @@ test("Join", async ({ page }) => {
 })
 
 test("Chain", async ({ page }) => {
-    const p = P.regexp(/\w+ /).chain(v => {
-        switch (v) {
-            case "first ": return P.str("second")
-            case "alpha ": return P.str("beta")
-            case "a ": return P.str("b")
-        }
-    })
-    expect(p.parse("first second")).toEqual("second")
-    expect(p.parse("alpha beta")).toEqual("beta")
-    expect(p.parse("a b")).toEqual("b")
+    const p = P.regexp(/[([{]/).chain(v => (
+        {
+            "(": P.str(")"),
+            "[": P.str("]"),
+            "{": P.str("}"),
+        }[v].map(closingParenthesis => v + closingParenthesis)
+    ))
+    expect(p.parse("()")).toEqual("()")
+    expect(p.parse("[]")).toEqual("[]")
+    expect(p.parse("{}")).toEqual("{}")
     expect(() => p.parse("hello")).toThrowError()
 })
 

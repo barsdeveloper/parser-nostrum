@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test"
 import httpServer from "http-server"
 import JsonGrammar from "../src/grammars/JsonGrammar.js"
 import MathGrammar from "../src/grammars/MathGrammar.js"
+import P from "../src/Parsernostrum.js"
 import sample1 from "./sample1.js"
 import sample2 from "./sample2.js"
 
@@ -17,6 +18,22 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
     webserver.close()
+})
+
+test("Matched parentheses", async ({ page }) => {
+    /** @type {P<any>} */
+    const matcheParentheses = P.seq(
+        P.str("("),
+        P.alt(
+            P.lazy(() => matcheParentheses),
+            P.regexp(/\w*/),
+        ),
+        P.str(")"),
+    )
+    expect(matcheParentheses.parse("()")).toBeTruthy()
+    expect(matcheParentheses.parse("(a)")).toBeTruthy()
+    expect(matcheParentheses.parse("(((((b)))))")).toBeTruthy()
+    expect(() => matcheParentheses.parse("(()")).toThrow()
 })
 
 test("Arithmetic", async ({ page }) => {
