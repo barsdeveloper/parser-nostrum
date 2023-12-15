@@ -8,11 +8,6 @@ import SuccessParser from "./SuccessParser.js"
  */
 export default class TimesParser extends Parser {
 
-    #backtracking = false
-    get backtracking() {
-        return this.#backtracking
-    }
-
     #parser
     get parser() {
         return this.#parser
@@ -39,7 +34,7 @@ export default class TimesParser extends Parser {
         this.#max = max
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [this.#parser]
     }
 
@@ -49,15 +44,6 @@ export default class TimesParser extends Parser {
      */
     wrap(...parsers) {
         const result = /** @type {TimesParser<typeof parsers[0]>} */(new TimesParser(parsers[0], this.#min, this.#max))
-        if (this.#backtracking) {
-            result.#backtracking = true
-        }
-        return result
-    }
-
-    asBacktracking() {
-        const result = new TimesParser(this.#parser, this.#min, this.#max)
-        result.#backtracking = true
         return result
     }
 

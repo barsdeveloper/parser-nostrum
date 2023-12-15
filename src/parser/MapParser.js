@@ -17,8 +17,6 @@ export default class MapParser extends Parser {
         return this.#mapper
     }
 
-    isActualParser = false
-
     /**
      * @param {P} parser
      * @param {(v: ParserValue<P>) => R} mapper
@@ -29,7 +27,7 @@ export default class MapParser extends Parser {
         this.#mapper = mapper
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [this.#parser]
     }
 

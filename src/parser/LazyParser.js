@@ -7,7 +7,6 @@ import Parser from "./Parser.js"
 export default class LazyParser extends Parser {
 
     #parser
-    isActualParser = false
 
     /** @type {T} */
     #resolvedPraser
@@ -25,7 +24,7 @@ export default class LazyParser extends Parser {
         return this.#resolvedPraser
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [this.resolve()]
     }
 

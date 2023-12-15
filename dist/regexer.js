@@ -1,43 +1,3 @@
-/** @template T */
-class PairMap {
-
-    /** @type {Map<Parser<any>, Map<Parser<any>, T>>} */
-    #map = new Map()
-
-    /**
-     * @param {Parser<any>} first
-     * @param {Parser<any>} second
-     */
-    get(first, second) {
-        return this.#map.get(first)?.get(second)
-    }
-
-    /**
-     * @param {Parser<any>} first
-     * @param {Parser<any>} second
-     * @param {T} value
-     */
-    set(first, second, value) {
-        let map = this.#map.get(first);
-        if (!map) {
-            map = new Map();
-            this.#map.set(first, map);
-        }
-        map.set(second, value);
-        return this
-    }
-
-    /**
-     * @param {Parser<any>} first
-     * @param {Parser<any>} second
-     * @param {T} value
-     */
-    setGet(first, second, value) {
-        this.set(first, second, value);
-        return value
-    }
-}
-
 /**
  * @template Value
  * @typedef {{
@@ -46,7 +6,6 @@ class PairMap {
  *     position: Number,
  * }} Result
  */
-
 
 class Reply {
 
@@ -80,7 +39,6 @@ class Reply {
         return /** @type {Context} */({
             regexer: regexer,
             input: input,
-            equals: new PairMap(),
             visited: new Map(),
         })
     }
@@ -168,51 +126,6 @@ class Parser {
         return isTraversable ? this.wrap(unwrapped[0].withActualParser(other, traverse, opaque)) : other
     }
 
-    /**
-     * @param {Context} context
-     * @param {Parser<any>} rhs
-     * @param {Boolean} strict
-     */
-    equals(context, rhs, strict) {
-        let lhs = /** @type {Parser<any>} */(this);
-        if (lhs === rhs) {
-            return true
-        }
-        if (!strict) {
-            lhs = this.actualParser();
-            rhs = rhs.actualParser();
-        }
-        if (
-            rhs instanceof lhs.constructor && !(lhs instanceof rhs.constructor)
-            // @ts-expect-error
-            || rhs.resolve && !lhs.resolve
-        ) {
-            // Take advantage of polymorphism or compare a lazy against a non lazy (not the other way around)
-            const temp = lhs;
-            lhs = rhs;
-            rhs = temp;
-        }
-        let memoized = context.equals.get(lhs, rhs);
-        if (memoized !== undefined) {
-            return memoized
-        } else if (memoized === undefined) {
-            context.equals.set(lhs, rhs, true);
-            memoized = lhs.doEquals(context, rhs, strict);
-            context.equals.set(lhs, rhs, memoized);
-        }
-        return memoized
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return false
-    }
-
     toString(context = Reply.makeContext(null, ""), indent = 0) {
         if (context.visited.has(this)) {
             return "<...>" // Recursive parser
@@ -264,16 +177,6 @@ class StringParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof StringParser && this.#value === other.#value
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         const inlined = this.value.replaceAll("\n", "\\n");
@@ -299,16 +202,6 @@ class SuccessParser extends StringParser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return strict ? other instanceof SuccessParser : super.doEquals(context, other, false)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         return "<SUCCESS>"
@@ -320,11 +213,6 @@ class SuccessParser extends StringParser {
  * @extends Parser<ParserValue<T>>
  */
 class AlternativeParser extends Parser {
-
-    #backtracking = false
-    get backtracking() {
-        return this.#backtracking
-    }
 
     #parsers
     get parsers() {
@@ -352,13 +240,6 @@ class AlternativeParser extends Parser {
     wrap(...parsers) {
         // @ts-expect-error
         const result = /** @type {AlternativeParser<T>} */(new this.Self(...parsers));
-        result.#backtracking = this.#backtracking;
-        return result
-    }
-
-    asBacktracking() {
-        const result = this.wrap(...this.#parsers);
-        result.#backtracking = true;
         return result
     }
 
@@ -375,28 +256,6 @@ class AlternativeParser extends Parser {
             }
         }
         return Reply.makeFailure(position)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        if (
-            !(other instanceof AlternativeParser)
-            || this.#parsers.length != other.#parsers.length
-            || this.#backtracking !== other.#backtracking
-        ) {
-            return false
-        }
-        for (let i = 0; i < this.#parsers.length; ++i) {
-            if (!this.#parsers[i].equals(context, other.#parsers[i], strict)) {
-                return false
-            }
-        }
-        return true
     }
 
     /**
@@ -475,18 +334,6 @@ class ChainedParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof ChainedParser
-            && this.#fn === other.#fn
-            && this.#parser.equals(context, other.parser, strict)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         return this.#parser.toString(context, indent) + " => chained<f()>"
@@ -504,16 +351,6 @@ class FailureParser extends Parser {
      */
     parse(context, position) {
         return Reply.makeFailure(position)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof FailureParser
     }
 
     /**
@@ -572,25 +409,6 @@ class LazyParser extends Parser {
     parse(context, position) {
         this.resolve();
         return this.#resolvedPraser.parse(context, position)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        if (other instanceof LazyParser) {
-            if (this.#parser === other.#parser) {
-                return true
-            }
-            other = other.resolve();
-        } else if (strict) {
-            return false
-        }
-        this.resolve();
-        return this.#resolvedPraser.equals(context, other, strict)
     }
 
     /**
@@ -669,19 +487,6 @@ class LookaroundParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return this === other
-            || other instanceof LookaroundParser
-            && this.#type === other.#type
-            && this.#parser.equals(context, other.#parser, strict)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         return "(" + this.#type + this.#parser.toString(context, indent) + ")"
@@ -745,25 +550,39 @@ class MapParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof MapParser
-            && this.#mapper === other.#mapper
-            && this.#parser.equals(context, other.#parser, strict)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         let serializedMapper = this.#mapper.toString();
-        if (serializedMapper.length > 80 || serializedMapper.includes("\n")) {
-            serializedMapper = "( ... ) => { ... }";
+        if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
+            serializedMapper = "(...) => { ... }";
         }
         return this.#parser.toString(context, indent) + ` -> map<${serializedMapper}>`
+    }
+}
+
+/**
+ * @template {Parser<any>} T
+ * @extends {AlternativeParser<[ParserValue<T>, SuccessParser]>}
+ */
+class OptionalParser extends AlternativeParser {
+
+    /** @param {T} parser */
+    constructor(parser) {
+        super(parser, SuccessParser.instance);
+    }
+
+    unwrap(target = /** @type {Parser<any>} */(null)) {
+        return [this.parsers[0]]
+    }
+
+    /**
+     * @template {Parser<any>[]} T
+     * @param {T} parsers
+     * @returns {OptionalParser<T>}
+     */
+    wrap(...parsers) {
+        // @ts-expect-error
+        return super.wrap(...parsers, SuccessParser.instance)
     }
 }
 
@@ -808,18 +627,6 @@ class RegExpParser extends Parser {
         return match
             ? Reply.makeSuccess(position + match[0].length, this.#group >= 0 ? match[this.#group] : match)
             : Reply.makeFailure(position)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof RegExpParser
-            && (!strict || this.#group === other.#group)
-            && this.#regexp.source === other.#regexp.source
     }
 
     /**
@@ -884,24 +691,6 @@ class SequenceParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        if (!(other instanceof SequenceParser) || this.#parsers.length != other.#parsers.length) {
-            return false
-        }
-        for (let i = 0; i < this.#parsers.length; ++i) {
-            if (!this.#parsers[i].equals(context, other.#parsers[i], strict)) {
-                return false
-            }
-        }
-        return true
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         const indentation = Parser.indentation.repeat(indent);
@@ -919,11 +708,6 @@ class SequenceParser extends Parser {
  * @extends {Parser<ParserValue<T>[]>}
  */
 class TimesParser extends Parser {
-
-    #backtracking = false
-    get backtracking() {
-        return this.#backtracking
-    }
 
     #parser
     get parser() {
@@ -961,15 +745,6 @@ class TimesParser extends Parser {
      */
     wrap(...parsers) {
         const result = /** @type {TimesParser<typeof parsers[0]>} */(new TimesParser(parsers[0], this.#min, this.#max));
-        if (this.#backtracking) {
-            result.#backtracking = true;
-        }
-        return result
-    }
-
-    asBacktracking() {
-        const result = new TimesParser(this.#parser, this.#min, this.#max);
-        result.#backtracking = true;
         return result
     }
 
@@ -996,20 +771,6 @@ class TimesParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} other
-     * @param {Boolean} strict
-     */
-    doEquals(context, other, strict) {
-        return other instanceof TimesParser
-            && this.#backtracking === other.#backtracking
-            && this.#min === other.#min
-            && this.#max === other.#max
-            && this.#parser.equals(context, other.#parser, strict)
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
      */
     doToString(context, indent = 0) {
         return this.parser.toString(context, indent)
@@ -1019,35 +780,9 @@ class TimesParser extends Parser {
                         : this.#min === 1 && this.#max === Number.POSITIVE_INFINITY ? "+"
                             : "{"
                             + this.#min
-                            + (this.#min !== this.#max ? "," : this.#max !== Number.POSITIVE_INFINITY ? this.#max : "")
+                            + (this.#min !== this.#max ? "," + this.#max : "")
                             + "}"
             )
-    }
-}
-
-/**
- * @template {Parser<any>} T
- * @extends {AlternativeParser<[ParserValue<T>, SuccessParser]>}
- */
-class OptionalParser extends AlternativeParser {
-
-    /** @param {T} parser */
-    constructor(parser) {
-        super(parser, SuccessParser.instance);
-    }
-
-    unwrap(target = /** @type {Parser<any>} */(null)) {
-        return [this.parsers[0]]
-    }
-
-    /**
-     * @template {Parser<any>[]} T
-     * @param {T} parsers
-     * @returns {OptionalParser<T>}
-     */
-    wrap(...parsers) {
-        // @ts-expect-error
-        return super.wrap(...parsers, SuccessParser.instance)
     }
 }
 
@@ -1055,8 +790,7 @@ class OptionalParser extends AlternativeParser {
 class Regexer {
 
     #parser
-    #optimized
-    #groups = new Map()
+
     /** @type {(new (parser: Parser<any>) => Regexer<typeof parser>) & typeof Regexer} */
     Self
 
@@ -1121,29 +855,6 @@ class Regexer {
         // @ts-expect-error
         this.Self = this.constructor;
         this.#parser = parser;
-        this.#optimized = optimized;
-    }
-
-    /**
-     * @template {Parser<any>} T
-     * @param {T} parser
-     */
-    static optimize(parser) {
-
-    }
-
-    /**
-     * @param {Regexer<Parser<any>> | Parser<any>} lhs
-     * @param {Regexer<Parser<any>> | Parser<any>} rhs
-     */
-    static equals(lhs, rhs, strict = false) {
-        const a = lhs instanceof Regexer ? lhs.getParser() : lhs;
-        const b = rhs instanceof Regexer ? rhs.getParser() : rhs;
-        return a.equals(
-            Reply.makeContext(lhs instanceof Regexer ? lhs : rhs instanceof Regexer ? rhs : null),
-            b,
-            strict
-        )
     }
 
     getParser() {

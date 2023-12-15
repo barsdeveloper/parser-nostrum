@@ -8,9 +8,6 @@ export default class Parser {
     /** @protected */
     predicate = v => this === v || v instanceof Function && this instanceof v
 
-    /** Calling parse() can make it change the overall parsing outcome */
-    isActualParser = true
-
     /** @type {(new (...args: any) => Parser) & typeof Parser} */
     Self
 
@@ -35,7 +32,7 @@ export default class Parser {
     }
 
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return /** @type {Parser<T>[]} */([])
     }
 
@@ -55,31 +52,6 @@ export default class Parser {
      */
     parse(context, position) {
         return null
-    }
-
-    /**
-     * @param {ConstructorType<Parser<any>>[]} traverse List of types to ignore and traverse even though they have isActualParser = true
-     * @param {ConstructorType<Parser<any>>[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @returns {Parser<any>}
-     */
-    actualParser(traverse = [], opaque = []) {
-        let isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate)
-        let unwrapped = isTraversable ? this.unwrap() : undefined
-        isTraversable &&= unwrapped?.length === 1
-        return isTraversable ? unwrapped[0].actualParser(traverse, opaque) : this
-    }
-
-    /**
-     * @param {Parser<any>?} other
-     * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} traverse List of types to ignore and traverse even though they have isActualParser = true
-     * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @returns {Parser<any>}
-     */
-    withActualParser(other, traverse = [], opaque = []) {
-        let isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate)
-        let unwrapped = isTraversable ? this.unwrap() : undefined
-        isTraversable &&= unwrapped?.length === 1
-        return isTraversable ? this.wrap(unwrapped[0].withActualParser(other, traverse, opaque)) : other
     }
 
     toString(context = Reply.makeContext(null, ""), indent = 0) {

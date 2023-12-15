@@ -17,12 +17,9 @@ export default class SequenceParser extends Parser {
     constructor(...parsers) {
         super()
         this.#parsers = parsers
-        if (this.#parsers.length === 1) {
-            this.isActualParser = false
-        }
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [...this.#parsers]
     }
 

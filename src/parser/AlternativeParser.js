@@ -9,11 +9,6 @@ import SuccessParser from "./SuccessParser.js"
  */
 export default class AlternativeParser extends Parser {
 
-    #backtracking = false
-    get backtracking() {
-        return this.#backtracking
-    }
-
     #parsers
     get parsers() {
         return this.#parsers
@@ -23,9 +18,6 @@ export default class AlternativeParser extends Parser {
     constructor(...parsers) {
         super()
         this.#parsers = parsers
-        if (this.#parsers.length === 1) {
-            this.isActualParser = false
-        }
     }
 
     unwrap() {
@@ -40,13 +32,6 @@ export default class AlternativeParser extends Parser {
     wrap(...parsers) {
         // @ts-expect-error
         const result = /** @type {AlternativeParser<T>} */(new this.Self(...parsers))
-        result.#backtracking = this.#backtracking
-        return result
-    }
-
-    asBacktracking() {
-        const result = this.wrap(...this.#parsers)
-        result.#backtracking = true
         return result
     }
 
