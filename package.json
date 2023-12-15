@@ -1,8 +1,8 @@
 {
-  "name": "regexer",
+  "name": "parsernostrum",
   "type": "module",
   "version": "1.0.0",
-  "description": "A monadic LL(infinity) parser combinator library for javascript",
+  "description": "A tiny LL parser combinator library for javascript",
   "main": "src/Regexer.js",
   "scripts": {
     "build": "rollup --config",
@@ -11,15 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/barsdeveloper/regexer.git"
+    "url": "git+https://github.com/barsdeveloper/parsernostrum.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/barsdeveloper/regexer/issues"
+    "url": "https://github.com/barsdeveloper/parsernostrum/issues"
   },
-  "homepage": "https://github.com/barsdeveloper/regexer#readme",
+  "homepage": "https://github.com/barsdeveloper/parsernostrum#readme",
   "devDependencies": {
     "@playwright/test": "^1",
     "@rollup/plugin-terser": "^0",

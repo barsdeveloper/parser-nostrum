@@ -2,16 +2,16 @@ import terser from "@rollup/plugin-terser"
 
 export default [
     {
-        input: 'src/Regexer.js',
+        input: 'src/Parsernostrum.js',
         output: {
-            file: 'dist/regexer.js',
+            file: 'dist/parsernostrum.js',
             format: 'es'
         }
     },
     {
-        input: 'src/Regexer.js',
+        input: 'src/Parsernostrum.js',
         output: {
-            file: 'dist/regexer.min.js',
+            file: 'dist/parsernostrum.min.js',
             format: 'es'
         },
         plugins: [

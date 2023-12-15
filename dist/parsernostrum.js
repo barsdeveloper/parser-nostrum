@@ -34,10 +34,10 @@ class Reply {
         })
     }
 
-    /** @param {Regexer<Parser<any>>} regexer */
-    static makeContext(regexer = null, input = "") {
+    /** @param {Parsernostrum<Parser<any>>} parsernostrum */
+    static makeContext(parsernostrum = null, input = "") {
         return /** @type {Context} */({
-            regexer: regexer,
+            parsernostrum: parsernostrum,
             input: input,
             visited: new Map(),
         })
@@ -252,7 +252,7 @@ class AlternativeParser extends Parser {
 
 /**
  * @template {Parser<any>} T
- * @template {(v: ParserValue<T>, input: String, position: Number) => Regexer<Parser<any>>} C
+ * @template {(v: ParserValue<T>, input: String, position: Number) => Parsernostrum<Parser<any>>} C
  * @extends Parser<ReturnType<C>>
  */
 class ChainedParser extends Parser {
@@ -342,7 +342,7 @@ class LazyParser extends Parser {
     /** @type {T} */
     #resolvedPraser
 
-    /** @param {() => Regexer<T>} parser */
+    /** @param {() => Parsernostrum<T>} parser */
     constructor(parser) {
         super();
         this.#parser = parser;
@@ -364,10 +364,10 @@ class LazyParser extends Parser {
      * @param {P} parsers
      */
     wrap(...parsers) {
-        const regexerConstructor = /** @type {ConstructorType<Regexer<typeof parsers[0]>>} */(
+        const parsernostrumConstructor = /** @type {ConstructorType<Parsernostrum<typeof parsers[0]>>} */(
             this.#parser().constructor
         );
-        return new LazyParser(() => new regexerConstructor(parsers[0]))
+        return new LazyParser(() => new parsernostrumConstructor(parsers[0]))
     }
 
     /**
@@ -389,7 +389,7 @@ class LazyParser extends Parser {
 }
 
 /** @template {Parser<any>} T */
-class LookaroundParser extends Parser {
+class Lookahead extends Parser {
 
     #parser
     get parser() {
@@ -431,7 +431,7 @@ class LookaroundParser extends Parser {
      * @param {P} parsers
      */
     wrap(...parsers) {
-        return new LookaroundParser(parsers[0], this.#type)
+        return new Lookahead(parsers[0], this.#type)
     }
 
     /**
@@ -440,13 +440,13 @@ class LookaroundParser extends Parser {
      */
     parse(context, position) {
         if (
-            this.#type === LookaroundParser.Type.NEGATIVE_BEHIND
-            || this.#type === LookaroundParser.Type.POSITIVE_BEHIND
+            this.#type === Lookahead.Type.NEGATIVE_BEHIND
+            || this.#type === Lookahead.Type.POSITIVE_BEHIND
         ) {
             throw new Error("Lookbehind is not implemented yet")
         } else {
             const result = this.#parser.parse(context, position);
-            return result.status == (this.#type === LookaroundParser.Type.POSITIVE_AHEAD)
+            return result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
                 ? Reply.makeSuccess(position, "")
                 : Reply.makeFailure(position)
         }
@@ -462,9 +462,9 @@ class LookaroundParser extends Parser {
 }
 
 /**
- * @template {Parser<any>} P
- * @template R
- * @extends Parser<R>
+ * @template {Parser<any>} T
+ * @template P
+ * @extends Parser<P>
  */
 class MapParser extends Parser {
 
@@ -479,8 +479,8 @@ class MapParser extends Parser {
     }
 
     /**
-     * @param {P} parser
-     * @param {(v: ParserValue<P>) => R} mapper
+     * @param {T} parser
+     * @param {(v: ParserValue<P>) => P} mapper
      */
     constructor(parser, mapper) {
         super();
@@ -503,7 +503,7 @@ class MapParser extends Parser {
     /**
      * @param {Context} context
      * @param {Number} position
-     * @returns {Result<R>}
+     * @returns {Result<P>}
      */
     parse(context, position) {
         const result = this.#parser.parse(context, position);
@@ -724,11 +724,11 @@ class TimesParser extends Parser {
 }
 
 /** @template {Parser<any>} T */
-class Regexer {
+class Parsernostrum {
 
     #parser
 
-    /** @type {(new (parser: Parser<any>) => Regexer<typeof parser>) & typeof Regexer} */
+    /** @type {(new (parser: Parser<any>) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
     Self
 
     static #numberMapper = v => Number(v)
@@ -847,9 +847,9 @@ class Regexer {
     // Combinators
 
     /**
-     * @template {[Regexer<any>, Regexer<any>, ...Regexer<any>[]]} P
+     * @template {[Parsernostrum<any>, Parsernostrum<any>, ...Parsernostrum<any>[]]} P
      * @param {P} parsers
-     * @returns {Regexer<SequenceParser<UnwrapParser<P>>>}
+     * @returns {Parsernostrum<SequenceParser<UnwrapParser<P>>>}
      */
     static seq(...parsers) {
         const results = new this(new SequenceParser(...parsers.map(p => p.getParser())));
@@ -858,9 +858,9 @@ class Regexer {
     }
 
     /**
-     * @template {[Regexer<any>, Regexer<any>, ...Regexer<any>[]]} P
+     * @template {[Parsernostrum<any>, Parsernostrum<any>, ...Parsernostrum<any>[]]} P
      * @param {P} parsers
-     * @returns {Regexer<AlternativeParser<UnwrapParser<P>>>}
+     * @returns {Parsernostrum<AlternativeParser<UnwrapParser<P>>>}
      */
     static alt(...parsers) {
         // @ts-expect-error
@@ -868,17 +868,17 @@ class Regexer {
     }
 
     /**
-     * @template {Regexer<any>} P
+     * @template {Parsernostrum<any>} P
      * @param {P} parser
      */
     static lookahead(parser) {
-        return new this(new LookaroundParser(parser.getParser(), LookaroundParser.Type.POSITIVE_AHEAD))
+        return new this(new Lookahead(parser.getParser(), Lookahead.Type.POSITIVE_AHEAD))
     }
 
     /**
-     * @template {Regexer<any>} P
+     * @template {Parsernostrum<any>} P
      * @param {() => P} parser
-     * @returns {Regexer<LazyParser<UnwrapParser<P>>>}
+     * @returns {Parsernostrum<LazyParser<UnwrapParser<P>>>}
      */
     static lazy(parser) {
         return new this(new LazyParser(parser))
@@ -886,7 +886,7 @@ class Regexer {
 
     /**
      * @param {Number} min
-     * @returns {Regexer<TimesParser<T>>}
+     * @returns {Parsernostrum<TimesParser<T>>}
      */
     times(min, max = min) {
         // @ts-expect-error
@@ -907,41 +907,42 @@ class Regexer {
         return this.times(0, n)
     }
 
-    /** @returns {Regexer<T?>} */
+    /** @returns {Parsernostrum<T?>} */
     opt() {
         // @ts-expect-error
         return this.Self.alt(this, this.Self.success())
     }
 
     /**
-     * @template {Regexer<Parser<any>>} P
+     * @template {Parsernostrum<Parser<any>>} P
      * @param {P} separator
      */
     sepBy(separator, allowTrailing = false) {
         const results = this.Self.seq(
             this,
-            this.Self.seq(separator, this).map(Regexer.#secondElementGetter).many()
+            this.Self.seq(separator, this).map(Parsernostrum.#secondElementGetter).many()
         )
-            .map(Regexer.#arrayFlatter);
+            .map(Parsernostrum.#arrayFlatter);
         return results
     }
 
     skipSpace() {
-        return this.Self.seq(this, this.Self.optWhitespace).map(Regexer.#firstElementGetter)
+        return this.Self.seq(this, this.Self.optWhitespace).map(Parsernostrum.#firstElementGetter)
     }
 
     /**
-     * @template R
-     * @param {(v: ParserValue<T>) => R} fn
-     * @returns {Regexer<MapParser<T, R>>}
+     * @template P
+     * @param {(v: ParserValue<T>) => P} fn
+     * @returns {Parsernostrum<MapParser<T, P>>}
      */
     map(fn) {
+        // @ts-expect-error
         return new this.Self(new MapParser(this.#parser, fn))
     }
 
     /**
-     * @template {Regexer<any>} R
-     * @param {(v: ParserValue<T>, input: String, position: Number) => R} fn
+     * @template {Parsernostrum<any>} P
+     * @param {(v: ParserValue<T>, input: String, position: Number) => P} fn
      */
     chain(fn) {
         return new this.Self(new ChainedParser(this.#parser, fn))
@@ -949,17 +950,17 @@ class Regexer {
 
     /**
      * @param {(v: ParserValue<T>, input: String, position: Number) => boolean} fn
-     * @return {Regexer<T>}
+     * @return {Parsernostrum<T>}
      */
     assert(fn) {
-        return /** @type {Regexer<T>} */(this.chain((v, input, position) => fn(v, input, position)
+        return /** @type {Parsernostrum<T>} */(this.chain((v, input, position) => fn(v, input, position)
             ? this.Self.success().map(() => v)
             : this.Self.failure()
         ))
     }
 
     join(value = "") {
-        return this.map(Regexer.#joiner)
+        return this.map(Parsernostrum.#joiner)
     }
 
     toString(indent = 0, newline = false) {
@@ -968,4 +969,4 @@ class Regexer {
     }
 }
 
-export { Regexer as default };
+export { Parsernostrum as default };
