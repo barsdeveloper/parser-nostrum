@@ -4,7 +4,6 @@ import FailureParser from "./parser/FailureParser.js"
 import LazyParser from "./parser/LazyParser.js"
 import LookaroundParser from "./parser/LookaroundParser.js"
 import MapParser from "./parser/MapParser.js"
-import OptionalParser from "./parser/OptionalParser.js"
 import Parser from "./parser/Parser.js"
 import RegExpParser from "./parser/RegExpParser.js"
 import Reply from "./Reply.js"
@@ -200,7 +199,7 @@ export default class Regexer {
     /** @returns {Regexer<T?>} */
     opt() {
         // @ts-expect-error
-        return new this.Self(new OptionalParser(this.#parser))
+        return this.Self.alt(this, this.Self.success())
     }
 
     /**

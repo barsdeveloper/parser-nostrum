@@ -52,9 +52,6 @@ class Parser {
     /** @protected */
     predicate = v => this === v || v instanceof Function && this instanceof v
 
-    /** Calling parse() can make it change the overall parsing outcome */
-    isActualParser = true
-
     /** @type {(new (...args: any) => Parser) & typeof Parser} */
     Self
 
@@ -79,7 +76,7 @@ class Parser {
     }
 
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return /** @type {Parser<T>[]} */([])
     }
 
@@ -99,31 +96,6 @@ class Parser {
      */
     parse(context, position) {
         return null
-    }
-
-    /**
-     * @param {ConstructorType<Parser<any>>[]} traverse List of types to ignore and traverse even though they have isActualParser = true
-     * @param {ConstructorType<Parser<any>>[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @returns {Parser<any>}
-     */
-    actualParser(traverse = [], opaque = []) {
-        let isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate);
-        let unwrapped = isTraversable ? this.unwrap() : undefined;
-        isTraversable &&= unwrapped?.length === 1;
-        return isTraversable ? unwrapped[0].actualParser(traverse, opaque) : this
-    }
-
-    /**
-     * @param {Parser<any>?} other
-     * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} traverse List of types to ignore and traverse even though they have isActualParser = true
-     * @param {(Parser<any> | ConstructorType<Parser<any>>)[]} opaque List of types to consider actual parser even though they have isActualParser = false
-     * @returns {Parser<any>}
-     */
-    withActualParser(other, traverse = [], opaque = []) {
-        let isTraversable = (!this.isActualParser || traverse.some(this.predicate)) && !opaque.some(this.predicate);
-        let unwrapped = isTraversable ? this.unwrap() : undefined;
-        isTraversable &&= unwrapped?.length === 1;
-        return isTraversable ? this.wrap(unwrapped[0].withActualParser(other, traverse, opaque)) : other
     }
 
     toString(context = Reply.makeContext(null, ""), indent = 0) {
@@ -223,9 +195,6 @@ class AlternativeParser extends Parser {
     constructor(...parsers) {
         super();
         this.#parsers = parsers;
-        if (this.#parsers.length === 1) {
-            this.isActualParser = false;
-        }
     }
 
     unwrap() {
@@ -305,7 +274,7 @@ class ChainedParser extends Parser {
         this.#fn = chained;
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [this.#parser]
     }
 
@@ -369,7 +338,6 @@ class FailureParser extends Parser {
 class LazyParser extends Parser {
 
     #parser
-    isActualParser = false
 
     /** @type {T} */
     #resolvedPraser
@@ -387,7 +355,7 @@ class LazyParser extends Parser {
         return this.#resolvedPraser
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [this.resolve()]
     }
 
@@ -454,7 +422,7 @@ class LookaroundParser extends Parser {
         this.#type = type;
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [this.#parser]
     }
 
@@ -510,8 +478,6 @@ class MapParser extends Parser {
         return this.#mapper
     }
 
-    isActualParser = false
-
     /**
      * @param {P} parser
      * @param {(v: ParserValue<P>) => R} mapper
@@ -522,7 +488,7 @@ class MapParser extends Parser {
         this.#mapper = mapper;
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [this.#parser]
     }
 
@@ -557,32 +523,6 @@ class MapParser extends Parser {
             serializedMapper = "(...) => { ... }";
         }
         return this.#parser.toString(context, indent) + ` -> map<${serializedMapper}>`
-    }
-}
-
-/**
- * @template {Parser<any>} T
- * @extends {AlternativeParser<[ParserValue<T>, SuccessParser]>}
- */
-class OptionalParser extends AlternativeParser {
-
-    /** @param {T} parser */
-    constructor(parser) {
-        super(parser, SuccessParser.instance);
-    }
-
-    unwrap(target = /** @type {Parser<any>} */(null)) {
-        return [this.parsers[0]]
-    }
-
-    /**
-     * @template {Parser<any>[]} T
-     * @param {T} parsers
-     * @returns {OptionalParser<T>}
-     */
-    wrap(...parsers) {
-        // @ts-expect-error
-        return super.wrap(...parsers, SuccessParser.instance)
     }
 }
 
@@ -653,12 +593,9 @@ class SequenceParser extends Parser {
     constructor(...parsers) {
         super();
         this.#parsers = parsers;
-        if (this.#parsers.length === 1) {
-            this.isActualParser = false;
-        }
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [...this.#parsers]
     }
 
@@ -735,7 +672,7 @@ class TimesParser extends Parser {
         this.#max = max;
     }
 
-    unwrap(target = /** @type {Parser<any>} */(null)) {
+    unwrap() {
         return [this.#parser]
     }
 
@@ -973,7 +910,7 @@ class Regexer {
     /** @returns {Regexer<T?>} */
     opt() {
         // @ts-expect-error
-        return new this.Self(new OptionalParser(this.#parser))
+        return this.Self.alt(this, this.Self.success())
     }
 
     /**

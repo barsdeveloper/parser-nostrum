@@ -76,16 +76,36 @@ test("Test 1", async ({ page }) => {
 })
 
 test("Test 2", async ({ page }) => {
-    const g = R.alt(
-        R.str("a"),
-        R.str("b"),
-        R.lazy(() => g).opt().map(() => 123)
-    )
+    const g = R.lazy(() => R.lazy(() => R.seq(
+        R.str("Italy"),
+        R.lazy(() => R.regexp(/Switzerland/).chain(v => R.optWhitespace)),
+        R.alt(
+            R.str("Austria").map(() => 123),
+            R.alt(
+                R.str("Belgium").map(v => "abc"),
+                R.lazy(() => R.regexpGroups(/Spain/)),
+            ),
+            R.str("Poland"),
+            R.str("Portugal").map(() => { }),
+        ),
+        R.regexp(/(Romania)/, 1),
+        R.str("Netherlands").map(() => "xyz")
+    )))
     expect(g.toString(2, true)).toEqual(`
-        ALT<
-            a
-            | b
-            | <...>? -> map<() => 123>
+        SEQ<
+            "Italy"
+            /Switzerland/ => chained<f()>
+            ALT<
+                "Austria" -> map<() => 123>
+                | ALT<
+                    "Belgium" -> map<v => "abc">
+                    | /Spain/
+                >
+                | "Poland"
+                | "Portugal" -> map<() => {}>
+            >
+            /(Romania)/
+            "Netherlands" -> map<() => "xyz">
         >`
     )
 })
