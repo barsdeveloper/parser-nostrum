@@ -1,6 +1,6 @@
 # Parsernostrum
 
-Parsernostrum is a small LL parsing combinator library for JavaScript, designed to be very simple leveraging modern JavaScript features and keeping code size to a minimum, particularly usefull in frontend contexts. It offers a set of tools to create robust and maintainable parsers with very little code.
+Parsernostrum is a small non backtracking LL parsing combinator library for JavaScript, designed to be very simple leveraging modern JavaScript features and keeping code size to a minimum. It is particularly suitable in frontend contexts. It offers a set of tools to create robust and maintainable parsers with very little code.
 
 ## Getting started
 
@@ -8,28 +8,52 @@ Parsernostrum is a small LL parsing combinator library for JavaScript, designed 
 npm install parsernostrum
 ```
 
-Import Parsernostrum and use it to create custom parsers tailored to your specific parsing needs.
+Import Parsernostrum and use it to create custom parsers tailored to your specific parsing needs. Then use the following methods to parse a astring.
 
 ```JavaScript
 import P from "parsernostrum"
+
+// Create a parser
+/** @type {P<any>} */
+const palindromeParser = P.alt(
+    P.regexp(/[a-z]/).chain(c =>
+        P.seq(
+            P.lazy(() => palindromeParser).opt(),
+            P.str(c)
+        ).map(([recursion, _]) => c + recursion + c)
+    ),
+    P.regexp(/([a-z])\1?/)
+).opt()
+
+// Use the parsing methods to check the text
+try {
+    // This method throws in case it doesn't parse
+    palindromeParser.parse("Not a palindrome!")
+} catch (e) {
+    console.log(e.message) // Could not parse "Not a palindrome!"
+}
+// This method returns an object with status (can be used as a boolean to check if success) and value keys
+let result = palindromeParser.run("Also not a palindrome")
+console.log(result.value) // null
+console.log(palindromeParser.parse("asantalivedasadevilatnasa")) // asantalivedasadevilatnasa
 ```
 
-Then you have access to the following tools:
+## Documentation
 
-### `str(string)`
+### `str(value)`
 Parses exact string literals.
 ```JavaScript
-regexp(regexp, group)
+P.str("A string!")
 ```
 
-### `regexp(regexp)`
+### `regexp(value, group)`
 Parses a regular expression and possibly returns a captured group.
 ```JavaScript
 P.regexp(/\d+/)
 ```
 
-### `regexpGroups(regexp)`
-Parses a regular expression returns all its captured groups exactly as returned by the `RegExp.exec()` method.
+### `regexpGroups(value)`
+Parses a regular expression and returns all its captured groups exactly as returned by the `RegExp.exec()` method.
 ```JavaScript
 P.regexpGroups(/begin\s*(\w*)\s*(\w*)\s*end/)
 ```
@@ -64,9 +88,9 @@ const matcheParentheses = P.seq(
     P.str(")"),
 )
 ```
-[!WARNING]
-LL parsers do not generally support left recursion. It is therefore important that your recursive parsers always have an actual parser as the first element (in this case P.str("("))). Otherwise the code will result in a runtime infinite recursion exception.
-In general it is always possible to rewrite a grammar to remove left recursion.
+>[!WARNING]
+>LL parsers do not generally support left recursion. It is therefore important that your recursive parsers always have an actual parser as the first element (in this case `P.str("("))`). Otherwise the code will result in a runtime infinite recursion exception.
+>In general it is always possible to rewrite a grammar to remove left recursion.
 
 ### `.times(min, max)`
 Matches a parser a specified number of times.

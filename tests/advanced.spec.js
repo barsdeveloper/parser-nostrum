@@ -20,6 +20,32 @@ test.afterAll(async () => {
     webserver.close()
 })
 
+test("Readme code", async ({ page }) => {
+    // Create a parser
+    /** @type {P<any>} */
+    const palindromeParser = P.alt(
+        P.regexp(/[a-z]/).chain(c =>
+            P.seq(
+                P.lazy(() => palindromeParser).opt(),
+                P.str(c)
+            ).map(([recursion, _]) => c + recursion + c)
+        ),
+        P.regexp(/([a-z])\1?/)
+    ).opt()
+
+    // Use the parsing methods to check the text
+    try {
+        // This method throws in case it doesn't parse
+        palindromeParser.parse("Not a palindrome!")
+    } catch (e) {
+        console.log(e.message) // Could not parse "Not a palindrome!"
+    }
+    // This method returns an object with status (can be used as a boolean to check if success) and value keys
+    let result = palindromeParser.run("Also not a palindrome")
+    console.log(result.value) // null
+    console.log(palindromeParser.parse("asantalivedasadevilatnasa")) // asantalivedasadevilatnasa
+})
+
 test("Matched parentheses", async ({ page }) => {
     /** @type {P<any>} */
     const matcheParentheses = P.seq(
@@ -34,6 +60,25 @@ test("Matched parentheses", async ({ page }) => {
     expect(matcheParentheses.parse("(a)")).toBeTruthy()
     expect(matcheParentheses.parse("(((((b)))))")).toBeTruthy()
     expect(() => matcheParentheses.parse("(()")).toThrow()
+})
+
+test("Palindrome", async ({ page }) => {
+    const palindromeParser = P.alt(
+        P.regexp(/[a-z]/).chain(c =>
+            P.seq(
+                P.lazy(() => palindromeParser).opt(),
+                P.str(c)
+            ).map(([recursion, _]) => c + recursion + c)
+        ),
+        P.regexp(/([a-z])\1?/)
+    ).opt()
+    expect(palindromeParser.parse("")).toEqual("")
+    expect(palindromeParser.parse("a")).toEqual("a")
+    expect(palindromeParser.parse("aa")).toEqual("aa")
+    expect(palindromeParser.parse("aba")).toEqual("aba")
+    expect(palindromeParser.parse("abba")).toEqual("abba")
+    expect(palindromeParser.parse("racecar")).toEqual("racecar")
+    expect(palindromeParser.parse("asantalivedasadevilatnasa")).toEqual("asantalivedasadevilatnasa")
 })
 
 test("Arithmetic", async ({ page }) => {

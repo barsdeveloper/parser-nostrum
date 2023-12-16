@@ -96,11 +96,14 @@ export default class Parsernostrum {
         return result.status && result.position === input.length ? result : Reply.makeFailure(result.position)
     }
 
-    /** @param {String} input */
+    /**
+     * @param {String} input
+     * @throws when the parser fails to match
+     */
     parse(input) {
         const result = this.run(input)
         if (!result.status) {
-            throw new Error("Parsing error")
+            throw new Error(`Could not parse "${input.length > 20 ? input.substring(0, 17) + "..." : input}"`)
         }
         return result.value
     }
