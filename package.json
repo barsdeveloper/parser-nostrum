@@ -1,9 +1,10 @@
 {
   "name": "parsernostrum",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "A tiny LL parser combinator library for javascript",
   "main": "src/Regexer.js",
+  "types": "src/types.js",
   "scripts": {
     "build": "rollup --config",
     "test": "npx playwright test",
