@@ -39,6 +39,19 @@ test("Number", async ({ page }) => {
     expect(() => p.parse("alpha")).toThrowError()
 })
 
+test("Number integer", async ({ page }) => {
+    const p = P.numberInteger
+    expect(p.parse("0")).toEqual(0)
+    expect(p.parse("+0")).toEqual(0)
+    expect(p.parse("-0")).toEqual(-0)
+    expect(p.parse("00")).toEqual(0)
+    expect(p.parse("+6")).toEqual(6)
+    expect(p.parse("-99")).toEqual(-99)
+    expect(p.parse("5833")).toEqual(5833)
+    expect(p.parse("000077")).toEqual(77)
+    expect(() => p.parse("+0.5")).toThrowError()
+})
+
 test("Number natural", async ({ page }) => {
     const p = P.numberNatural
     expect(p.parse("0")).toEqual(0)

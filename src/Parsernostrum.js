@@ -40,6 +40,9 @@ export default class Parsernostrum {
         .map(Number)
 
     /** Parser accepting any digits only number */
+    static numberInteger = this.regexp(/[\-\+]?\d+(?!\.\d)/).map(Number)
+
+    /** Parser accepting any digits only number */
     static numberNatural = this.regexp(/\d+/).map(Number)
 
     /** Parser accepting any valid decimal, possibly signed, possibly in the exponential form number */
