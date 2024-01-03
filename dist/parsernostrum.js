@@ -753,6 +753,9 @@ class Parsernostrum {
     /** Parser accepting any digits only number */
     static numberInteger = this.reg(/[\-\+]?\d+(?!\.\d)/).map(Number)
 
+    /** Parser accepting any digits only number and returns a BigInt */
+    static numberBigInteger = this.reg(this.numberInteger.getParser().parser.regexp).map(BigInt)
+
     /** Parser accepting any digits only number */
     static numberNatural = this.reg(/\d+/).map(Number)
 
