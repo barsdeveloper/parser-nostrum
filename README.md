@@ -181,4 +181,4 @@ Some usefull parsers that can be reused and combined with other parsers.
 - `whitespaceMultiline`: whitespace that containes at least a newline
 - `doubleQuotedString`: escape-aware string delimited by `"`, returns the content
 - `singleQuotedString`: escape-aware string delimited by `'`, returns the content
-- `backtickQuotedString`: escape-aware string delimited by `\``, returns the content
+- `backtickQuotedString`: escape-aware string delimited by `` ` ``, returns the content
