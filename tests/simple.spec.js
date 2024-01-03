@@ -128,13 +128,13 @@ test("Sequence: alpha, beta", async ({ page }) => {
 test("Sequence regex and strings", async ({ page }) => {
     const p = P.seq(
         P.str("("),
-        P.optWhitespace,
+        P.whitespaceOpt,
         P.number,
-        P.optWhitespace,
+        P.whitespaceOpt,
         P.str(","),
-        P.optWhitespace,
+        P.whitespaceOpt,
         P.number,
-        P.optWhitespace,
+        P.whitespaceOpt,
         P.str(")")
     )
     expect(p.parse("(1,1)")).toEqual(["(", "", 1, "", ",", "", 1, "", ")"])

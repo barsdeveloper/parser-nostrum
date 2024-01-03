@@ -78,7 +78,7 @@ test("Test 1", async ({ page }) => {
 test("Test 2", async ({ page }) => {
     const g = P.lazy(() => P.lazy(() => P.seq(
         P.str("Italy"),
-        P.lazy(() => P.regexp(/Switzerland/).chain(v => P.optWhitespace)),
+        P.lazy(() => P.regexp(/Switzerland/).chain(v => P.whitespaceOpt)),
         P.alt(
             P.str("Austria").map(() => 123),
             P.alt(

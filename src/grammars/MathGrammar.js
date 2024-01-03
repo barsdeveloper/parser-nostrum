@@ -38,7 +38,7 @@ export default class MathGrammar {
 
     static #opFragment = P.lazy(() =>
         P.seq(
-            P.optWhitespace,
+            P.whitespaceOpt,
             P.alt(
                 P.str("^").map(() => ({
                     precedence: 20,
@@ -66,7 +66,7 @@ export default class MathGrammar {
                     function: (a, b) => a - b,
                 })),
             ).map(v => v),
-            P.optWhitespace,
+            P.whitespaceOpt,
             MathGrammar.expressionFragment,
         )
             .map(([_0, operator, _2, expressionFragment]) => [operator, ...expressionFragment])
@@ -79,9 +79,9 @@ export default class MathGrammar {
             MathGrammar.#number.map(v => [v]),
             P.seq(
                 P.str("("),
-                P.optWhitespace,
+                P.whitespaceOpt,
                 P.lazy(() => MathGrammar.expressionFragment),
-                P.optWhitespace,
+                P.whitespaceOpt,
                 P.str(")"),
             ).map(([_0, _1, entries]) => [this.#evaluate(entries)])
         ))

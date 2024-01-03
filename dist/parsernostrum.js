@@ -769,14 +769,17 @@ class Parsernostrum {
     /** Parser accepting whitespace */
     static whitespace = this.regexp(/\s+/)
 
+    /** Parser accepting whitespace */
+    static whitespaceOpt = this.regexp(/\s*/)
+
     /** Parser accepting whitespace that spans on a single line */
     static whitespaceInline = this.regexp(/[^\S\n]+/)
 
+    /** Parser accepting whitespace that spans on a single line */
+    static whitespaceInlineOpt = this.regexp(/[^\S\n]+/)
+
     /** Parser accepting whitespace that contains a list a newline */
     static whitespaceMultiline = this.regexp(/\s*?\n\s*/)
-
-    /** Parser accepting whitespace */
-    static optWhitespace = this.regexp(/\s*/)
 
     /** Parser accepting a double quoted string and returns the content */
     static doubleQuotedString = this.regexpGroups(new RegExp(`"(${this.#createEscapeable('"')})"`))
@@ -933,7 +936,7 @@ class Parsernostrum {
     }
 
     skipSpace() {
-        return this.Self.seq(this, this.Self.optWhitespace).map(Parsernostrum.#firstElementGetter)
+        return this.Self.seq(this, this.Self.whitespaceOpt).map(Parsernostrum.#firstElementGetter)
     }
 
     /**
