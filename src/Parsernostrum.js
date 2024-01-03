@@ -73,15 +73,15 @@ export default class Parsernostrum {
     static whitespaceMultiline = this.reg(/\s*?\n\s*/)
 
     /** Parser accepting a double quoted string and returns the content */
-    static doubleQuotedString = this.regArr(new RegExp(`"(${this.#createEscapeable('"')})"`))
+    static doubleQuotedString = this.regArray(new RegExp(`"(${this.#createEscapeable('"')})"`))
         .map(this.#secondElementGetter)
 
     /** Parser accepting a single quoted string and returns the content */
-    static singleQuotedString = this.regArr(new RegExp(`'(${this.#createEscapeable("'")})'`))
+    static singleQuotedString = this.regArray(new RegExp(`'(${this.#createEscapeable("'")})'`))
         .map(this.#secondElementGetter)
 
     /** Parser accepting a backtick quoted string and returns the content */
-    static backtickQuotedString = this.regArr(new RegExp(`\`(${this.#createEscapeable("`")})\``))
+    static backtickQuotedString = this.regArray(new RegExp(`\`(${this.#createEscapeable("`")})\``))
         .map(this.#secondElementGetter)
 
     /** @param {T} parser */
@@ -132,7 +132,7 @@ export default class Parsernostrum {
     }
 
     /** @param {RegExp} value */
-    static regArr(value) {
+    static regArray(value) {
         return new this(new RegExpParser(value, -1))
     }
 

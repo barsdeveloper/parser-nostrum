@@ -16,13 +16,13 @@ import P from "parsernostrum"
 // Create a parser
 /** @type {P<any>} */
 const palindromeParser = P.alt(
-    P.regexp(/[a-z]/).chain(c =>
+    P.reg(/[a-z]/).chain(c =>
         P.seq(
             P.lazy(() => palindromeParser).opt(),
             P.str(c)
         ).map(([recursion, _]) => c + recursion + c)
     ),
-    P.regexp(/([a-z])\1?/)
+    P.reg(/([a-z])\1?/)
 ).opt()
 
 // Use the parsing methods to check the text
@@ -46,16 +46,16 @@ Parses exact string literals.
 P.str("A string!")
 ```
 
-### `regexp(value, group)`
+### `reg(value, group)`
 Parses a regular expression and possibly returns a captured group.
 ```JavaScript
-P.regexp(/\d+/)
+P.reg(/\d+/)
 ```
 
-### `regexpGroups(value)`
-Parses a regular expression and returns all its captured groups exactly as returned by the `RegExp.exec()` method.
+### `regArray(value)`
+Parses a regular expression and returns all its captured groups array exactly as returned by the `RegExp.exec()` method.
 ```JavaScript
-P.regexpGroups(/begin\s*(\w*)\s*(\w*)\s*end/)
+P.regArray(/begin\s*(\w*)\s*(\w*)\s*end/)
 ```
 
 ### `seq(...parsers)`
@@ -83,7 +83,7 @@ const matcheParentheses = P.seq(
     P.str("("),
     P.alt(
         P.lazy(() => matcheParentheses),
-        P.regexp(/\w*/),
+        P.reg(/\w*/),
     ),
     P.str(")"),
 )
@@ -126,7 +126,7 @@ myParser.opt()
 ### `.sepBy(separator)`
 Parses a list of elements separated by a given separator.
 ```JavaScript
-myParser.sepBy(P.regexp(/\s*,\s*/))
+myParser.sepBy(P.reg(/\s*,\s*/))
 ```
 
 ### `.skipSpace()`
@@ -144,7 +144,7 @@ myParser.map(n => `Number: ${n}`)
 ### `.chain(fn)`
 Chains the output of one parser to another.
 ```JavaScript
-const p = P.regexp(/[([{]/).chain(v => (
+const p = P.reg(/[([{]/).chain(v => (
     {
         "(": P.str(")"),
         "[": P.str("]"),
