@@ -44,12 +44,15 @@ export default class Parsernostrum {
     static numberNatural = this.regexp(/\d+/).map(this.#numberMapper)
 
     /** Parser accepting any valid decimal, possibly signed, possibly in the exponential form number */
-    static numberExponential = this.regexp(new RegExp(
-        this.#numberRegex.source + String.raw`(?:[eE][\+\-]?\d+)?(?!\.)`)
-    ).map(this.#numberMapper)
+    static numberExponential = this.regexp(new RegExp(this.#numberRegex.source + String.raw`(?:[eE][\+\-]?\d+)?(?!\.)`))
+        .map(this.#numberMapper)
 
     /** Parser accepting any valid decimal number between 0 and 1 */
     static numberUnit = this.regexp(/\+?(?:0(?:\.\d+)?|1(?:\.0+)?)(?![\.\d])/)
+        .map(this.#numberMapper)
+
+    /** Parser accepting any integer between 0 and 255 */
+    static numberByte = this.regexp(/0*(?:25[0-5]|2[0-4]\d|1?\d?\d)(?!\d|\.)/)
         .map(this.#numberMapper)
 
     /** Parser accepting whitespace */

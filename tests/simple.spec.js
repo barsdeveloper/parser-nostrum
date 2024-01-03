@@ -82,6 +82,23 @@ test("Number unit", async ({ page }) => {
     expect(() => p.parse("alpha")).toThrowError()
 })
 
+test("Number byte", async ({ page }) => {
+    const p = P.numberByte
+    expect(p.parse("0")).toEqual(0)
+    expect(p.parse("1")).toEqual(1)
+    expect(p.parse("250")).toEqual(250)
+    expect(p.parse("255")).toEqual(255)
+    expect(() => p.parse("256")).toThrowError()
+    expect(() => p.parse("+0")).toThrowError()
+    expect(() => p.parse("+1")).toThrowError()
+    expect(() => p.parse("1.1")).toThrowError()
+    expect(() => p.parse("-0.1")).toThrowError()
+    expect(() => p.parse("+ 0")).toThrowError()
+    expect(() => p.parse(" unrelated")).toThrowError()
+    expect(() => p.parse("betabeta")).toThrowError()
+    expect(() => p.parse("alpha")).toThrowError()
+})
+
 test("Whitespace inline", async ({ page }) => {
     const p = P.whitespaceInline
     expect(p.parse("       ")).toEqual("       ")
