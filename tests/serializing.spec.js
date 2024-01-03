@@ -83,7 +83,7 @@ test("Test 2", async ({ page }) => {
             P.str("Austria").map(() => 123),
             P.alt(
                 P.str("Belgium").map(v => "abc"),
-                P.lazy(() => P.regexpGroups(/Spain/)),
+                P.lazy(() => P.regArr(/Spain/)),
             ),
             P.str("Poland"),
             P.str("Portugal").map(() => { }),
