@@ -27,7 +27,7 @@ const palindromeParser = P.alt(
 
 // Use the parsing methods to check the text
 try {
-    // This method throws in case it doesn't parse
+    // This method throws in case it doesn't parse correctly
     palindromeParser.parse("Not a palindrome!")
 } catch (e) {
     console.log(e.message) // Could not parse "Not a palindrome!"
@@ -164,3 +164,21 @@ Joins the results of a parser into a single string.
 ```JavaScript
 myParser.join(", ")
 ```
+
+### Predefined parsers
+Some usefull parsers that can be reused and combined with other parsers.
+- `number`: the most common numbers, possibly fractional and signed
+- `numberInteger`: possibly signed integer
+- `numberBigInteger`: same as numberInteger but returns a BigInt JavaScript object
+- `numberBigInteger`: just digits
+- `numberExponential`: a number written possibly in the exponential form (e.g.: 1E-5)
+- `numberUnit`: a number between 0 and 1
+- `numberByte`: a integer between 0 and 255
+- `whitespace`: any whitespace (/\s+/)
+- `whitespaceOpt`: any optional whitespace (/\s*/)
+- `whitespaceInline`: whitespace on a single line
+- `whitespaceInlineOpt`: optional whitespace on a single line
+- `whitespaceMultiline`: whitespace that containes at least a newline
+- `doubleQuotedString`: escape-aware string delimited by `"`, returns the content
+- `singleQuotedString`: escape-aware string delimited by `'`, returns the content
+- `backtickQuotedString`: escape-aware string delimited by `\``, returns the content

@@ -52,6 +52,19 @@ test("Number integer", async ({ page }) => {
     expect(() => p.parse("+0.5")).toThrowError()
 })
 
+test("Number big integer", async ({ page }) => {
+    const p = P.numberBigInteger
+    expect(p.parse("0")).toEqual(0n)
+    expect(p.parse("+0")).toEqual(0n)
+    expect(p.parse("-0")).toEqual(-0n)
+    expect(p.parse("00")).toEqual(0n)
+    expect(p.parse("+6")).toEqual(6n)
+    expect(p.parse("-99")).toEqual(-99n)
+    expect(p.parse("5833")).toEqual(5833n)
+    expect(p.parse("000077")).toEqual(77n)
+    expect(() => p.parse("+0.5")).toThrowError()
+})
+
 test("Number natural", async ({ page }) => {
     const p = P.numberNatural
     expect(p.parse("0")).toEqual(0)
