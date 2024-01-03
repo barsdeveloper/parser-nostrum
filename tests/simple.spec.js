@@ -242,7 +242,7 @@ test("Join", async ({ page }) => {
 })
 
 test("Chain", async ({ page }) => {
-    const p = P.regexp(/[([{]/).chain(v => (
+    const p = P.reg(/[([{]/).chain(v => (
         {
             "(": P.str(")"),
             "[": P.str("]"),
@@ -284,7 +284,7 @@ test("Skip space", async ({ page }) => {
 })
 
 test("Separated by", async ({ page }) => {
-    const p = P.str("a").sepBy(P.regexp(/\s*,\s*/))
+    const p = P.str("a").sepBy(P.reg(/\s*,\s*/))
     expect(p.parse("a,  a  ,  a")).toEqual(["a", "a", "a"])
     expect(p.parse("a  ,  a")).toEqual(["a", "a"])
     expect(p.parse("a")).toEqual(["a"])

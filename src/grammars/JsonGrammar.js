@@ -12,22 +12,22 @@ export default class JsonGrammar {
     static #number = P.numberExponential
     /** @type {Parsernostrum<Parser<any[]>>} */
     static #array = P.seq(
-        P.regexp(/\[\s*/),
-        P.lazy(() => this.json).sepBy(P.regexp(/\s*,\s*/)),
-        P.regexp(/\s*\]/)
+        P.reg(/\[\s*/),
+        P.lazy(() => this.json).sepBy(P.reg(/\s*,\s*/)),
+        P.reg(/\s*\]/)
     ).map(([_0, values, _2]) => values)
     /** @type {Parsernostrum<Parser<Object>>} */
     static #object = P.seq(
-        P.regexp(/\{\s*/),
+        P.reg(/\{\s*/),
         P.seq(
             this.#string,
-            P.regexp(/\s*:\s*/),
+            P.reg(/\s*:\s*/),
             P.lazy(() => this.json),
         )
             .map(([k, _1, v]) => ({ [k]: v }))
-            .sepBy(P.regexp(/\s*,\s*/))
+            .sepBy(P.reg(/\s*,\s*/))
             .map(v => v.reduce((acc, cur) => ({ ...acc, ...cur }), ({}))),
-        P.regexp(/\s*}/)
+        P.reg(/\s*}/)
     ).map(([_0, object, _2]) => object)
 
     static json = P.alt(

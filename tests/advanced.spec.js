@@ -24,13 +24,13 @@ test("Readme code", async ({ page }) => {
     // Create a parser
     /** @type {P<any>} */
     const palindromeParser = P.alt(
-        P.regexp(/[a-z]/).chain(c =>
+        P.reg(/[a-z]/).chain(c =>
             P.seq(
                 P.lazy(() => palindromeParser).opt(),
                 P.str(c)
             ).map(([recursion, _]) => c + recursion + c)
         ),
-        P.regexp(/([a-z])\1?/)
+        P.reg(/([a-z])\1?/)
     ).opt()
 
     // Use the parsing methods to check the text
@@ -52,7 +52,7 @@ test("Matched parentheses", async ({ page }) => {
         P.str("("),
         P.alt(
             P.lazy(() => matcheParentheses),
-            P.regexp(/\w*/),
+            P.reg(/\w*/),
         ),
         P.str(")"),
     )
@@ -64,13 +64,13 @@ test("Matched parentheses", async ({ page }) => {
 
 test("Palindrome", async ({ page }) => {
     const palindromeParser = P.alt(
-        P.regexp(/[a-z]/).chain(c =>
+        P.reg(/[a-z]/).chain(c =>
             P.seq(
                 P.lazy(() => palindromeParser).opt(),
                 P.str(c)
             ).map(([recursion, _]) => c + recursion + c)
         ),
-        P.regexp(/([a-z])\1?/)
+        P.reg(/([a-z])\1?/)
     ).opt()
     expect(palindromeParser.parse("")).toEqual("")
     expect(palindromeParser.parse("a")).toEqual("a")

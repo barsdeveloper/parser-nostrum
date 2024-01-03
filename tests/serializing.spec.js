@@ -10,9 +10,9 @@ test("Test String", async ({ page }) => {
 
 test("Test Regexp", async ({ page }) => {
     let regexp = /^(?:[A-Z][a-z]+\ )+/
-    expect(P.regexp(regexp).toString()).toEqual(`/${regexp.source}/`)
+    expect(P.reg(regexp).toString()).toEqual(`/${regexp.source}/`)
     regexp = /[\!@#$%^&*()\\[\]{}\-_+=~`|:;"'<>,./?]/
-    expect(P.regexp(regexp).toString()).toEqual(`/${regexp.source}/`)
+    expect(P.reg(regexp).toString()).toEqual(`/${regexp.source}/`)
 })
 
 test("Test Chained", async ({ page }) => {
@@ -22,10 +22,10 @@ test("Test Chained", async ({ page }) => {
 
 test("Test Times", async ({ page }) => {
     expect(P.str("a string").atLeast(1).toString()).toEqual('"a string"+')
-    expect(P.regexp(/\d+\ /).many().toString()).toEqual("/\\d+\\ /*")
+    expect(P.reg(/\d+\ /).many().toString()).toEqual("/\\d+\\ /*")
     expect(P.str(" ").opt().toString()).toEqual('" "?')
     expect(P.str("word").atMost(5).toString()).toEqual('"word"{0,5}')
-    expect(P.regexp(/[abc]/).times(2).toString()).toEqual('/[abc]/{2}')
+    expect(P.reg(/[abc]/).times(2).toString()).toEqual('/[abc]/{2}')
 })
 
 test("Test Map", async ({ page }) => {
@@ -78,7 +78,7 @@ test("Test 1", async ({ page }) => {
 test("Test 2", async ({ page }) => {
     const g = P.lazy(() => P.lazy(() => P.seq(
         P.str("Italy"),
-        P.lazy(() => P.regexp(/Switzerland/).chain(v => P.whitespaceOpt)),
+        P.lazy(() => P.reg(/Switzerland/).chain(v => P.whitespaceOpt)),
         P.alt(
             P.str("Austria").map(() => 123),
             P.alt(
@@ -88,7 +88,7 @@ test("Test 2", async ({ page }) => {
             P.str("Poland"),
             P.str("Portugal").map(() => { }),
         ),
-        P.regexp(/(Romania)/, 1),
+        P.reg(/(Romania)/, 1),
         P.str("Netherlands").map(() => "xyz")
     )))
     expect(g.toString(2, true)).toEqual(`
