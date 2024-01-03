@@ -20,7 +20,6 @@ export default class Parsernostrum {
     /** @type {(new (parser: Parser<any>) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
     Self
 
-    static #numberMapper = v => Number(v)
     /** @param {[any, ...any]|RegExpExecArray} param0 */
     static #firstElementGetter = ([v, _]) => v
     /** @param {[any, any, ...any]|RegExpExecArray} param0 */
@@ -38,22 +37,22 @@ export default class Parsernostrum {
 
     /** Parser accepting any valid decimal, possibly signed number */
     static number = this.regexp(new RegExp(this.#numberRegex.source + String.raw`(?!\.)`))
-        .map(this.#numberMapper)
+        .map(Number)
 
     /** Parser accepting any digits only number */
-    static numberNatural = this.regexp(/\d+/).map(this.#numberMapper)
+    static numberNatural = this.regexp(/\d+/).map(Number)
 
     /** Parser accepting any valid decimal, possibly signed, possibly in the exponential form number */
     static numberExponential = this.regexp(new RegExp(this.#numberRegex.source + String.raw`(?:[eE][\+\-]?\d+)?(?!\.)`))
-        .map(this.#numberMapper)
+        .map(Number)
 
     /** Parser accepting any valid decimal number between 0 and 1 */
     static numberUnit = this.regexp(/\+?(?:0(?:\.\d+)?|1(?:\.0+)?)(?![\.\d])/)
-        .map(this.#numberMapper)
+        .map(Number)
 
     /** Parser accepting any integer between 0 and 255 */
     static numberByte = this.regexp(/0*(?:25[0-5]|2[0-4]\d|1?\d?\d)(?!\d|\.)/)
-        .map(this.#numberMapper)
+        .map(Number)
 
     /** Parser accepting whitespace */
     static whitespace = this.regexp(/\s+/)
