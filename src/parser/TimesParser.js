@@ -79,17 +79,18 @@ export default class TimesParser extends Parser {
                         + this.#min
                         + (this.#min !== this.#max ? "," + this.#max : "")
                         + "}"
-        result += serialized + (
-            highlight === this
-                ? (
-                    // Group 1 is the portion between the last newline and end or the whole text
-                    Parser.indentation.repeat(result.match(/(?:\n|^)([^\n]+)$/)?.[1].length)
-                    + "^".repeat(serialized.length)
-                    + " "
-                    + Parser.highlight
-                )
-                : ""
-        )
+        if (highlight === this) {
+            result +=
+                serialized
+                + "\n"
+                + Parser.indentation.repeat(indent)
+                + " ".repeat(result.match(/(?:\n|^)([^\n]*)$/)[1].length)
+                + "^".repeat(serialized.length)
+                + " "
+                + Parser.highlight
+        } else {
+            result = Parser.appendBeforeHighlight(result, serialized)
+        }
         return result
     }
 }

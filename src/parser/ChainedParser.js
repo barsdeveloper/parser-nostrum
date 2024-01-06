@@ -75,11 +75,7 @@ export default class ChainedParser extends Parser {
                 + " "
                 + Parser.highlight
         } else {
-            if (result.endsWith(Parser.highlight)) {
-                result = result.replace(/(?=\n[^\n]+$)/, " => " + serialized)
-            } else {
-                result += " => " + serialized
-            }
+            result = Parser.appendBeforeHighlight(result, " => " + serialized)
         }
         return result
     }

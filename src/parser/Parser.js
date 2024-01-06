@@ -27,6 +27,19 @@ export default class Parser {
         })
     }
 
+    /**
+     * @param {String} target
+     * @param {String} value
+     */
+    static appendBeforeHighlight(target, value) {
+        if (target.endsWith(Parser.highlight)) {
+            target = target.replace(/(?=\n[^\n]+$)/, value)
+        } else {
+            target += value
+        }
+        return target
+    }
+
     constructor() {
         // @ts-expect-error
         this.Self = this.constructor

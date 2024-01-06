@@ -56,19 +56,44 @@ test("Test Chained", async ({ page }) => {
         a => chained<f()>
              ^^^^^^^^^^^^ ${Parser.highlight}`
     )
-    const alphab = P.str("alpha").chain(() => P.str("b"))
-    expect(alphab.toString()).toEqual('"alpha" => chained<f()>')
+    const alpha = P.reg(/alpha/)
+    const alphab = alpha.chain(() => P.str("b"))
+    expect(alphab.toString()).toEqual('/alpha/ => chained<f()>')
+    expect(alphab.toString(2, true, alpha)).toEqual(`
+        /alpha/ => chained<f()>
+        ^^^^^^^ ${Parser.highlight}`
+    )
     expect(alphab.toString(2, true, alphab)).toEqual(`
-        "alpha" => chained<f()>
+        /alpha/ => chained<f()>
                    ^^^^^^^^^^^^ ${Parser.highlight}`
     )
 })
 
 test("Test Times", async ({ page }) => {
-    expect(P.str("a string").atLeast(1).toString()).toEqual('"a string"+')
+    const aString = P.str("a string")
+    const moreStrings = aString.atLeast(1)
+    expect(moreStrings.toString()).toEqual('"a string"+')
+    expect(moreStrings.toString(2, true, aString)).toEqual(`
+        "a string"+
+        ^^^^^^^^^^ ${Parser.highlight}`
+    )
+    expect(moreStrings.toString(2, true, moreStrings)).toEqual(`
+        "a string"+
+                  ^ ${Parser.highlight}`
+    )
     expect(P.reg(/\d+\ /).many().toString()).toEqual("/\\d+\\ /*")
     expect(P.str(" ").opt().toString()).toEqual('" "?')
-    expect(P.str("word").atMost(5).toString()).toEqual('"word"{0,5}')
+    const word = P.str("word")
+    const moreWord = word.atMost(5)
+    expect(moreWord.toString()).toEqual('"word"{0,5}')
+    expect(moreWord.toString(2, true, word)).toEqual(`
+        "word"{0,5}
+        ^^^^^^ ${Parser.highlight}`
+    )
+    expect(moreWord.toString(2, true, moreWord)).toEqual(`
+        "word"{0,5}
+              ^^^^^ ${Parser.highlight}`
+    )
     expect(P.reg(/[abc]/).times(2).toString()).toEqual('/[abc]/{2}')
 })
 
