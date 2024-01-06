@@ -42,20 +42,45 @@ export default class ChainedParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        let result = this.#parser.parse(context, position)
-        if (!result.status) {
-            return result
+        const outcome = this.#parser.parse(context, position)
+        if (!outcome.status) {
+            return outcome
         }
-        result = this.#fn(result.value, context.input, result.position)?.getParser().parse(context, result.position)
-            ?? Reply.makeFailure(result.position)
+        const result = this.#fn(outcome.value, context.input, outcome.position)
+            .getParser()
+            .parse(context, outcome.position)
+        if (!result) {
+            return outcome
+        }
         return result
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return this.#parser.toString(context, indent) + " => chained<f()>"
+    doToString(context, indent, highlight) {
+        const serialized = "chained<f()>"
+        let result = this.#parser.toString(context, indent, highlight)
+        if (highlight === this) {
+            result +=
+                " => "
+                + serialized
+                + "\n"
+                // Group 1 is the portion between the last newline and end or the whole text
+                + Parser.indentation.repeat(indent)
+                + " ".repeat(result.match(/(?:\n|^)([^\n]+)$/)?.[1].length + 4)
+                + "^".repeat(serialized.length)
+                + " "
+                + Parser.highlight
+        } else {
+            if (result.endsWith(Parser.highlight)) {
+                result = result.replace(/(?=\n[^\n]+$)/, " => " + serialized)
+            } else {
+                result += " => " + serialized
+            }
+        }
+        return result
     }
 }

@@ -1,7 +1,7 @@
 import Parser from "./Parser.js"
 import Reply from "../Reply.js"
 
-/** @extends Parser<String> */
+/** @extends Parser<any> */
 export default class FailureParser extends Parser {
 
     static instance = new FailureParser()
@@ -17,8 +17,10 @@ export default class FailureParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         return "<FAILURE>"
+            + (highlight === this ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}` : "")
     }
 }

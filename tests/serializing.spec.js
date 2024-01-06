@@ -1,23 +1,67 @@
 import { test, expect } from "@playwright/test"
 import P from "../src/Parsernostrum.js"
+import Parser from "../src/parser/Parser.js"
 
 test("Test String", async ({ page }) => {
-    expect(P.str("a").toString()).toEqual("a")
-    expect(P.str("alpha").toString()).toEqual('"alpha"')
-    expect(P.str(" ").toString()).toEqual('" "')
-    expect(P.str("   beta ").toString()).toEqual('"   beta "')
+    const a = P.str("a")
+    expect(a.toString()).toEqual("a")
+    expect(a.toString(2, true, a)).toEqual(`
+        a
+        ^ ${Parser.highlight}`
+    )
+    const alpha = P.str("alpha")
+    expect(alpha.toString()).toEqual('"alpha"')
+    expect(alpha.toString(2, true, alpha)).toEqual(`
+        "alpha"
+        ^^^^^^^ ${Parser.highlight}`
+    )
+    const space = P.str(" ")
+    expect(space.toString()).toEqual('" "')
+    expect(space.toString(2, true, space)).toEqual(`
+        " "
+        ^^^ ${Parser.highlight}`
+    )
+    const beta = P.str("   beta ")
+    expect(beta.toString()).toEqual('"   beta "')
+    expect(beta.toString(2, true, beta)).toEqual(`
+        "   beta "
+        ^^^^^^^^^^ ${Parser.highlight}`
+    )
 })
 
 test("Test Regexp", async ({ page }) => {
-    let regexp = /^(?:[A-Z][a-z]+\ )+/
-    expect(P.reg(regexp).toString()).toEqual(`/${regexp.source}/`)
-    regexp = /[\!@#$%^&*()\\[\]{}\-_+=~`|:;"'<>,./?]/
-    expect(P.reg(regexp).toString()).toEqual(`/${regexp.source}/`)
+    const regexp1 = P.reg(/^(?:[A-Z][a-z]+\ )+/)
+    expect(regexp1.toString()).toEqual(`/${regexp1.getParser().regexp.source}/`)
+    expect(regexp1.toString(2, true, regexp1)).toEqual(`
+        /${regexp1.getParser().regexp.source}/
+        ^^^^^^^^^^^^^^^^^^^^^ ${Parser.highlight}`
+    )
+    const regexp2 = P.reg(/[\!@#$%^&*()\\[\]{}\-_+=~`|:;"'<>,./?]/)
+    expect(regexp2.toString()).toEqual(`/${regexp2.getParser().regexp.source}/`)
+    expect(regexp2.toString(2, true, regexp2)).toEqual(`
+        /${regexp2.getParser().regexp.source}/
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ${Parser.highlight}`
+    )
 })
 
 test("Test Chained", async ({ page }) => {
-    expect(P.str("a").chain(() => P.str("b")).toString()).toEqual("a => chained<f()>")
-    expect(P.str("alpha").chain(() => P.str("b")).toString()).toEqual('"alpha" => chained<f()>')
+    const a = P.str("a")
+    const ab = a.chain(() => P.str("b"))
+    expect(ab.toString()).toEqual("a => chained<f()>")
+    expect(ab.toString(2, true, a)).toEqual(`
+        a => chained<f()>
+        ^ ${Parser.highlight}`
+    )
+    expect(ab.toString(2, true, ab)).toEqual(`
+        a => chained<f()>
+             ^^^^^^^^^^^^ ${Parser.highlight}`
+    )
+    const alphab = P.str("alpha").chain(() => P.str("b"))
+    expect(alphab.toString()).toEqual('"alpha" => chained<f()>')
+    expect(alphab.toString(2, true, alphab)).toEqual(`
+        "alpha" => chained<f()>
+                   ^^^^^^^^^^^^ ${Parser.highlight}`
+    )
 })
 
 test("Test Times", async ({ page }) => {

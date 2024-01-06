@@ -4,6 +4,7 @@ import Reply from "../Reply.js"
 export default class Parser {
 
     static indentation = "    "
+    static highlight = "Last valid parser"
 
     /** @protected */
     predicate = v => this === v || v instanceof Function && this instanceof v
@@ -48,25 +49,27 @@ export default class Parser {
     /**
      * @param {Context} context
      * @param {Number} position
-     * @returns {Result<T>}
+     * @returns {Result<T> | Result<Parser>}
      */
     parse(context, position) {
         return null
     }
 
-    toString(context = Reply.makeContext(null, ""), indent = 0) {
+    /** @param {Parser<any>} highlight */
+    toString(context = Reply.makeContext(null, ""), indent = 0, highlight = null) {
         if (context.visited.has(this)) {
             return "<...>" // Recursive parser
         }
         context.visited.set(this, null)
-        return this.doToString(context, indent)
+        return this.doToString(context, indent, highlight)
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         return `${this.constructor.name} does not implement toString()`
     }
 }

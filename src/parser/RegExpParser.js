@@ -37,6 +37,7 @@ export default class RegExpParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      */
+    // @ts-expect-error
     parse(context, position) {
         const match = this.#anchoredRegexp.exec(context.input.substring(position))
         return match
@@ -47,8 +48,13 @@ export default class RegExpParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return "/" + this.#regexp.source + "/"
+    doToString(context, indent, highlight) {
+        let result = "/" + this.#regexp.source + "/"
+        if (highlight === this) {
+            result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight
+        }
+        return result
     }
 }

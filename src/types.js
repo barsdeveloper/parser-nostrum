@@ -1,13 +1,24 @@
 // @ts-nocheck
 
 /**
- * @template Value
- * @typedef {import("./Reply.js").Result<Value>} Result
+ * @template T
+ * @typedef {Object} Result
+ * @property {Boolean} status Indicates the success or failure of the operation.
+ * @property {T} value The result in case of success or the furthest parser that succeeded in case of failure.
+ * @property {Number} position The position in the input string.
  */
 
 /**
- * @template V
- * @typedef {import("./parser/Parser.js").default<V>} Parser
+ * @typedef {{
+ *     parsernostrum: Parsernostrum,
+ *     input: String,
+ *     visited: Map<Parser<any>, any>,
+ * }} Context
+ */
+
+/**
+ * @template T
+ * @typedef {import("./parser/Parser.js").default<T>} Parser
  */
 
 /**
@@ -31,27 +42,6 @@
  *     : any
  * } UnionFromArray
  **/
-
-/**
- * @template T
- * @typedef {T extends [infer A] ? [ConstructorType<A>]
- *     : T extends [infer A, ...infer B] ? [ConstructorType<A>, ...ConstructorsFromArrayTypes<B>]
- *     : T extends [] ? []
- *     : any
- * } ConstructorsFromArrayTypes
- **/
-
-/**
- *
- */
-
-/**
- * @typedef {{
- *     parsernostrum: Parsernostrum,
- *     input: String,
- *     visited: Map<Parser<any>, any>,
- * }} Context
- */
 
 /**
  * @template T

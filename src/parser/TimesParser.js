@@ -51,14 +51,12 @@ export default class TimesParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        const value = []
-        const result = /** @type {Result<ParserValue<T>[]>} */(
-            Reply.makeSuccess(position, value)
-        )
+        const value = /** @type {ParserValue<T>[]} */([])
+        const result = Reply.makeSuccess(position, value)
         for (let i = 0; i < this.#max; ++i) {
             const outcome = this.#parser.parse(context, result.position)
             if (!outcome.status) {
-                return i >= this.#min ? result : outcome
+                return i >= this.#min ? result : Reply.makeFailure(position)
             }
             result.value.push(outcome.value)
             result.position = outcome.position
@@ -69,17 +67,29 @@ export default class TimesParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return this.parser.toString(context, indent)
-            + (
-                this.#min === 0 && this.#max === 1 ? "?"
-                    : this.#min === 0 && this.#max === Number.POSITIVE_INFINITY ? "*"
-                        : this.#min === 1 && this.#max === Number.POSITIVE_INFINITY ? "+"
-                            : "{"
-                            + this.#min
-                            + (this.#min !== this.#max ? "," + this.#max : "")
-                            + "}"
-            )
+    doToString(context, indent, highlight) {
+        let result = this.parser.toString(context, indent, highlight)
+        const serialized =
+            this.#min === 0 && this.#max === 1 ? "?"
+                : this.#min === 0 && this.#max === Number.POSITIVE_INFINITY ? "*"
+                    : this.#min === 1 && this.#max === Number.POSITIVE_INFINITY ? "+"
+                        : "{"
+                        + this.#min
+                        + (this.#min !== this.#max ? "," + this.#max : "")
+                        + "}"
+        result += serialized + (
+            highlight === this
+                ? (
+                    // Group 1 is the portion between the last newline and end or the whole text
+                    Parser.indentation.repeat(result.match(/(?:\n|^)([^\n]+)$/)?.[1].length)
+                    + "^".repeat(serialized.length)
+                    + " "
+                    + Parser.highlight
+                )
+                : ""
+        )
+        return result
     }
 }

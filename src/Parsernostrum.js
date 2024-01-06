@@ -256,18 +256,20 @@ export default class Parsernostrum {
      * @return {Parsernostrum<T>}
      */
     assert(fn) {
-        return /** @type {Parsernostrum<T>} */(this.chain((v, input, position) => fn(v, input, position)
+        // @ts-expect-error
+        return this.chain((v, input, position) => fn(v, input, position)
             ? this.Self.success().map(() => v)
             : this.Self.failure()
-        ))
+        )
     }
 
     join(value = "") {
         return this.map(Parsernostrum.#joiner)
     }
 
-    toString(indent = 0, newline = false) {
+    /** @param {Parsernostrum<Parser<any>>} highlight */
+    toString(indent = 0, newline = false, highlight = null) {
         return (newline ? "\n" + Parser.indentation.repeat(indent) : "")
-            + this.#parser.toString(Reply.makeContext(this, ""), indent)
+            + this.#parser.toString(Reply.makeContext(this, ""), indent, highlight?.getParser())
     }
 }

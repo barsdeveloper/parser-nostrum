@@ -40,25 +40,29 @@ export default class AlternativeParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        let result
+        let furthest = Reply.makeFailure(position)
         for (let i = 0; i < this.#parsers.length; ++i) {
-            result = this.#parsers[i].parse(context, position)
+            const result = this.#parsers[i].parse(context, position)
             if (result.status) {
                 return result
             }
+            if (result.position > furthest.position && result.value) {
+                furthest = result
+            }
         }
-        return Reply.makeFailure(position)
+        return furthest
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         const indentation = Parser.indentation.repeat(indent)
         const deeperIndentation = Parser.indentation.repeat(indent + 1)
         if (this.#parsers.length === 2 && this.#parsers[1] instanceof SuccessParser) {
-            let result = this.#parsers[0].toString(context, indent)
+            let result = this.#parsers[0].toString(context, indent, highlight)
             if (!(this.#parsers[0] instanceof StringParser) && !context.visited.has(this.#parsers[0])) {
                 result = "<" + result + ">"
             }
@@ -66,8 +70,9 @@ export default class AlternativeParser extends Parser {
             return result
         }
         return "ALT<\n"
+            + (highlight === this ? `${indentation}^^^ ${Parser.highlight}\n` : "")
             + deeperIndentation + this.#parsers
-                .map(p => p.toString(context, indent + 1))
+                .map(p => p.toString(context, indent + 1, highlight))
                 .join("\n" + deeperIndentation + "| ")
             + "\n" + indentation + ">"
     }

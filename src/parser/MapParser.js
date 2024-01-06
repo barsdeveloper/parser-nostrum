@@ -55,12 +55,14 @@ export default class MapParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         let serializedMapper = this.#mapper.toString()
         if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
             serializedMapper = "(...) => { ... }"
         }
-        return this.#parser.toString(context, indent) + ` -> map<${serializedMapper}>`
+        return this.#parser.toString(context, indent, highlight === this ? this.#parser : highlight)
+            + ` -> map<${serializedMapper}>`
     }
 }

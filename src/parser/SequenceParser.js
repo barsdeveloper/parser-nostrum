@@ -35,12 +35,12 @@ export default class SequenceParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        const value = new Array(this.#parsers.length)
-        const result = /** @type {Result<ParserValue<T>>} */(Reply.makeSuccess(position, value))
+        const value = /** @type {ParserValue<T>} */(new Array(this.#parsers.length))
+        const result = Reply.makeSuccess(position, value)
         for (let i = 0; i < this.#parsers.length; ++i) {
             const outcome = this.#parsers[i].parse(context, result.position)
             if (!outcome.status) {
-                return outcome
+                return Reply.makeFailure(result.position, i > 0 ? this.#parsers[i - 1] : null)
             }
             result.value[i] = outcome.value
             result.position = outcome.position
@@ -51,13 +51,15 @@ export default class SequenceParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         const indentation = Parser.indentation.repeat(indent)
         const deeperIndentation = Parser.indentation.repeat(indent + 1)
         return "SEQ<\n"
+            + (highlight === this ? `${indentation}^^^ ${Parser.highlight}\n` : "")
             + this.#parsers
-                .map(p => deeperIndentation + p.toString(context, indent + 1))
+                .map(p => deeperIndentation + p.toString(context, indent + 1, highlight))
                 .join("\n")
             + "\n" + indentation + ">"
     }

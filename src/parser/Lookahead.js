@@ -52,24 +52,30 @@ export default class Lookahead extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        if (
-            this.#type === Lookahead.Type.NEGATIVE_BEHIND
-            || this.#type === Lookahead.Type.POSITIVE_BEHIND
-        ) {
-            throw new Error("Lookbehind is not implemented yet")
-        } else {
-            const result = this.#parser.parse(context, position)
-            return result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
-                ? Reply.makeSuccess(position, "")
-                : Reply.makeFailure(position)
-        }
+        const result = this.#parser.parse(context, position)
+        return result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
+            ? Reply.makeSuccess(position, "")
+            : Reply.makeFailure(position)
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return "(" + this.#type + this.#parser.toString(context, indent) + ")"
+    doToString(context, indent, highlight) {
+        let result = "(" + this.#type + this.#parser.toString(context, indent, highlight) + ")"
+        if (highlight === this) {
+            result = result.replace(
+                /(\n)|$/,
+                "\n"
+                + Parser.indentation.repeat(indent)
+                + "^".repeat(this.#type.length + 1)
+                + " "
+                + Parser.highlight
+                + "$1"
+            )
+        }
+        return result
     }
 }

@@ -1,37 +1,30 @@
-/**
- * @template Value
- * @typedef {{
- *     status: Boolean,
- *     value: Value,
- *     position: Number,
- * }} Result
- */
-
 export default class Reply {
 
     /**
-     * @template Value
+     * @template T
      * @param {Number} position
-     * @param {Value} value
+     * @param {T} value
+     * @returns {Result<T>}
      */
     static makeSuccess(position, value) {
-        return /** @type {Result<Value>} */({
+        return {
             status: true,
             value: value,
             position: position,
-        })
+        }
     }
 
     /**
-     * @template Value
      * @param {Number} position
+     * @param {Parser<any>} parser
+     * @returns {Result<Parser<any>>}
      */
-    static makeFailure(position) {
-        return /** @type {Result<Value>} */({
+    static makeFailure(position, parser = null) {
+        return {
             status: false,
-            value: null,
+            value: parser,
             position: position,
-        })
+        }
     }
 
     /** @param {Parsernostrum<Parser<any>>} parsernostrum */
