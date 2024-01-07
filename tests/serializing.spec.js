@@ -9,6 +9,11 @@ test("Test String", async ({ page }) => {
         a
         ^ ${Parser.highlight}`
     )
+    expect(P.str("|").toString()).toEqual('"|"')
+    expect(P.str("+").toString()).toEqual('"+"')
+    expect(P.str(".").toString()).toEqual('"."')
+    expect(P.str('"').toString()).toEqual('"\\""')
+    expect(P.str("alpha\nbeta").toString()).toEqual('"alpha\\nbeta"')
     const alpha = P.str("alpha")
     expect(alpha.toString()).toEqual('"alpha"')
     expect(alpha.toString(2, true, alpha)).toEqual(`
@@ -223,13 +228,14 @@ test("Test 1", async ({ page }) => {
 })
 
 test("Test 2", async ({ page }) => {
+    const belgium = P.str("Belgium")
     const g = P.lazy(() => P.lazy(() => P.seq(
         P.str("Italy"),
         P.lazy(() => P.reg(/Switzerland/).chain(v => P.whitespaceOpt)),
         P.alt(
             P.str("Austria").map(() => 123),
             P.alt(
-                P.str("Belgium").map(v => "abc"),
+                belgium.map(v => "abc"),
                 P.lazy(() => P.regArray(/Spain/)),
             ),
             P.str("Poland"),
@@ -246,6 +252,24 @@ test("Test 2", async ({ page }) => {
                 "Austria" -> map<() => 123>
                 | ALT<
                     "Belgium" -> map<v => "abc">
+                    | /Spain/
+                >
+                | "Poland"
+                | "Portugal" -> map<() => {}>
+            >
+            /(Romania)/
+            "Netherlands" -> map<() => "xyz">
+        >`
+    )
+    expect(g.toString(2, true, belgium)).toEqual(`
+        SEQ<
+            "Italy"
+            /Switzerland/ => chained<f()>
+            ALT<
+                "Austria" -> map<() => 123>
+                | ALT<
+                    "Belgium" -> map<v => "abc">
+                    ^^^^^^^^^ ${Parser.highlight}
                     | /Spain/
                 >
                 | "Poland"

@@ -39,7 +39,7 @@ export default class StringParser extends Parser {
      */
     doToString(context, indent, highlight) {
         const inlined = this.value.replaceAll("\n", "\\n")
-        let result = this.value.length !== 1 || this.value.trim() !== this.value
+        let result = !this.value.match(/^[a-zA-Z]$/)
             ? `"${inlined.replaceAll('"', '\\"')}"`
             : inlined
         if (highlight === this) {
