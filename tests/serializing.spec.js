@@ -98,7 +98,17 @@ test("Test Times", async ({ page }) => {
 })
 
 test("Test Map", async ({ page }) => {
-    expect(P.str("value").map(v => 123).toString()).toEqual('"value" -> map<v => 123>')
+    const value = P.str("value")
+    const parser = value.map(v => 123)
+    expect(parser.toString()).toEqual('"value" -> map<v => 123>')
+    expect(parser.toString(2, true, value)).toEqual(`
+        "value" -> map<v => 123>
+        ^^^^^^^ ${Parser.highlight}`
+    )
+    expect(parser.toString(2, true, parser)).toEqual(`
+        "value" -> map<v => 123>
+        ^^^^^^^ ${Parser.highlight}`
+    )
     expect(P.str("str").map(v => "Returns a very very very very very medium string").toString())
         .toEqual('"str" -> map<v => "Returns a very very very very very medium string">')
     expect(P.str("str").map(v => "Returns a very very very very very very very very string").toString())
@@ -106,40 +116,108 @@ test("Test Map", async ({ page }) => {
 })
 
 test("Test Alternative", async ({ page }) => {
-    expect(P.alt(P.str("apple"), P.lazy(() => P.str("b")), P.str("charlie").times(5)).toString(2, true)).toEqual(`
+    const b = P.str("b")
+    const charlie = P.str("charlie")
+    const charlieTimes = charlie.times(5)
+    const parser = P.alt(P.str("apple"), P.lazy(() => b), charlieTimes)
+    expect(parser.toString(2, true)).toEqual(`
         ALT<
             "apple"
             | b
             | "charlie"{5}
         >`
     )
+    expect(parser.toString(2, true, parser)).toEqual(`
+        ALT<
+        ^^^ ${Parser.highlight}
+            "apple"
+            | b
+            | "charlie"{5}
+        >`
+    )
+    expect(parser.toString(2, true, b)).toEqual(`
+        ALT<
+            "apple"
+            | b
+              ^ ${Parser.highlight}
+            | "charlie"{5}
+        >`
+    )
+    expect(parser.toString(2, true, charlie)).toEqual(`
+        ALT<
+            "apple"
+            | b
+            | "charlie"{5}
+              ^^^^^^^^^ ${Parser.highlight}
+        >`
+    )
+    expect(parser.toString(2, true, charlieTimes)).toEqual(`
+        ALT<
+            "apple"
+            | b
+            | "charlie"{5}
+                       ^^^ ${Parser.highlight}
+        >`
+    )
 })
 
 test("Test Sequence", async ({ page }) => {
-    const g = P.seq(P.str("a").opt(), P.lazy(() => P.str("bravo")), P.str("c"))
-    expect(g.toString(2, true)).toEqual(`
+    const bravo = P.lazy(() => P.str("bravo"))
+    const parser = P.seq(P.str("a").opt(), bravo, P.str("c"))
+    expect(parser.toString(2, true)).toEqual(`
         SEQ<
             a?
             "bravo"
             c
         >`
     )
+    expect(parser.toString(2, true, parser)).toEqual(`
+        SEQ<
+        ^^^ ${Parser.highlight}
+            a?
+            "bravo"
+            c
+        >`
+    )
+    expect(parser.toString(2, true, bravo)).toEqual(`
+        SEQ<
+            a?
+            "bravo"
+            ^^^^^^^ ${Parser.highlight}
+            c
+        >`
+    )
 })
 
 test("Test 1", async ({ page }) => {
-    expect(P.alt(
+    const gamma = P.str("gamma")
+    const seq = P.seq(
+        P.str("beta").map(v => v + 1).opt(),
+        gamma.many()
+    )
+    const seqMany = seq.atLeast(1)
+    const parser = P.alt(
         P.str("alpha"),
-        P.seq(
-            P.str("beta").map(v => v + 1).opt(),
-            P.str("gamma").many()
-        ).atLeast(1)
-    ).toString(2, true)).toEqual(`
+        seqMany,
+    )
+    expect(parser.toString(2, true, seq)).toEqual(`
+        ALT<
+            "alpha"
+            | SEQ<
+              ^^^ ${Parser.highlight}
+                "beta" -> map<v => v + 1>?
+                "gamma"*
+            >+
+        >`
+    )
+    expect(parser.toString(2, true, seqMany)).toEqual(`
         ALT<
             "alpha"
             | SEQ<
                 "beta" -> map<v => v + 1>?
                 "gamma"*
             >+
+             ^ ${Parser.highlight}
         >`
     )
 })

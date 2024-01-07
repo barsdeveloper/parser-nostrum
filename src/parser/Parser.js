@@ -33,11 +33,20 @@ export default class Parser {
      */
     static appendBeforeHighlight(target, value) {
         if (target.endsWith(Parser.highlight)) {
-            target = target.replace(/(?=\n[^\n]+$)/, value)
+            target = target.replace(/(?=(?:\n|^).+$)/, value)
         } else {
             target += value
         }
         return target
+    }
+
+    /** @param {String} value */
+    static lastRowLength(value, firstRowPadding = 0) {
+        // This regex always matches and group 2 (content of the last row) is always there
+        const match = value.match(/(?:\n|(^))([^\n]*)$/)
+        // Group 1 tells wheter or not it matched the first row (last row is also first row)
+        const additional = match[1] !== undefined ? firstRowPadding : 0
+        return match[2].length + additional
     }
 
     constructor() {

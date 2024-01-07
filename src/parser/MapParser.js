@@ -62,7 +62,8 @@ export default class MapParser extends Parser {
         if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
             serializedMapper = "(...) => { ... }"
         }
-        return this.#parser.toString(context, indent, highlight === this ? this.#parser : highlight)
-            + ` -> map<${serializedMapper}>`
+        let result = this.#parser.toString(context, indent, highlight === this ? this.#parser : highlight)
+        result = Parser.appendBeforeHighlight(result, ` -> map<${serializedMapper}>`)
+        return result
     }
 }

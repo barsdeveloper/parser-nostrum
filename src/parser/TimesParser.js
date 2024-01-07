@@ -83,8 +83,7 @@ export default class TimesParser extends Parser {
             result +=
                 serialized
                 + "\n"
-                + Parser.indentation.repeat(indent)
-                + " ".repeat(result.match(/(?:\n|^)([^\n]*)$/)[1].length)
+                + " ".repeat(Parser.lastRowLength(result, Parser.indentation.length * indent))
                 + "^".repeat(serialized.length)
                 + " "
                 + Parser.highlight

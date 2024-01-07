@@ -9,6 +9,12 @@ import SuccessParser from "./SuccessParser.js"
  */
 export default class AlternativeParser extends Parser {
 
+    static highlightRegexp = new RegExp(
+        // Matches the beginning of a row containing Parser.highlight only when after the first row of an alternative
+        String.raw`(?<=[^\S\n]*\| .*\n)^(?=[^\S\n]*\^+ ${Parser.highlight}(?:\n|$))`,
+        "m"
+    )
+
     #parsers
     get parsers() {
         return this.#parsers
@@ -69,11 +75,17 @@ export default class AlternativeParser extends Parser {
             result += "?"
             return result
         }
-        return "ALT<\n"
+        let serialized = this.#parsers
+            .map(p => p.toString(context, indent + 1, highlight))
+            .join("\n" + deeperIndentation + "| ")
+        if (highlight) {
+            serialized = serialized.replace(AlternativeParser.highlightRegexp, "  ")
+
+        }
+        let result = "ALT<\n"
             + (highlight === this ? `${indentation}^^^ ${Parser.highlight}\n` : "")
-            + deeperIndentation + this.#parsers
-                .map(p => p.toString(context, indent + 1, highlight))
-                .join("\n" + deeperIndentation + "| ")
+            + deeperIndentation + serialized
             + "\n" + indentation + ">"
+        return result
     }
 }

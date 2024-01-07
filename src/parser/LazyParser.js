@@ -54,6 +54,6 @@ export default class LazyParser extends Parser {
      * @param {Parser<any>} highlight
      */
     doToString(context, indent, highlight) {
-        return this.resolve().toString(context, indent, highlight === this ? this.#resolvedPraser : null)
+        return this.resolve().toString(context, indent, highlight === this ? this.#resolvedPraser : highlight)
     }
 }
