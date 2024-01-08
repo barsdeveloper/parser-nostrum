@@ -20,16 +20,18 @@ export default class Parsernostrum {
     /** @type {(new (parser: Parser<any>) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
     Self
 
+    static lineColumnFromOffset(string, offset) {
+        const lines = string.substring(0, offset).split('\n')
+        const line = lines.length
+        const column = lines[lines.length - 1].length + 1
+        return { line, column }
+    }
     /** @param {[any, ...any]|RegExpExecArray} param0 */
     static #firstElementGetter = ([v, _]) => v
     /** @param {[any, any, ...any]|RegExpExecArray} param0 */
     static #secondElementGetter = ([_, v]) => v
     static #arrayFlatter = ([first, rest]) => [first, ...rest]
-    /** @param {any} v */
-    static #joiner = v =>
-        v instanceof Array
-            ? v.join("")
-            : v
+    static #joiner = v => v instanceof Array ? v.join("") : v
     static #createEscapeable = character => String.raw`[^${character}\\]*(?:\\.[^${character}\\]*)*`
     static #numberRegex = /[-\+]?(?:\d*\.)?\d+/
 
@@ -103,8 +105,8 @@ export default class Parsernostrum {
      * @returns {Result<ParserValue<T>>}
      */
     run(input) {
-        const result = this.#parser.parse(Reply.makeContext(this, input), 0)
-        return result.status && result.position === input.length ? result : Reply.makeFailure(result.position)
+        // @ts-expect-error
+        return this.#parser.parse(Reply.makeContext(this, input), 0)
     }
 
     /**
@@ -114,7 +116,28 @@ export default class Parsernostrum {
     parse(input) {
         const result = this.run(input)
         if (!result.status) {
-            throw new Error(`Could not parse "${input.length > 20 ? input.substring(0, 17) + "..." : input}"`)
+            const chunkLength = 20
+            const string = (input.length > chunkLength ? input.substring(0, chunkLength - 3) + "..." : input).replaceAll('"', '\\"')
+            let segment = input.substring(result.position - chunkLength / 2, result.position + chunkLength / 2)
+            let offset = result.position
+            if (result.position > chunkLength / 2) {
+                segment = "..." + segment
+                offset = chunkLength / 2 + 3
+            }
+            if (result.position < input.length - chunkLength / 2) {
+                segment = segment + "..."
+            }
+            const position = Parsernostrum.lineColumnFromOffset(input, result.position + 1)
+            throw new Error(
+                `Could not parse "${string}"\n\n`
+                + `Input: ${segment}\n`
+                + "       "
+                + " ".repeat(offset)
+                + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.position})\n\n`
+                + `Last valid parser matched:`
+                + this.toString(1, true, result.value)
+                + "\n"
+            )
         }
         return result.value
     }
@@ -267,9 +290,12 @@ export default class Parsernostrum {
         return this.map(Parsernostrum.#joiner)
     }
 
-    /** @param {Parsernostrum<Parser<any>>} highlight */
+    /** @param {Parsernostrum<Parser<any>> | Parser<any>} highlight */
     toString(indent = 0, newline = false, highlight = null) {
+        if (highlight instanceof Parsernostrum) {
+            highlight = highlight.getParser()
+        }
         return (newline ? "\n" + Parser.indentation.repeat(indent) : "")
-            + this.#parser.toString(Reply.makeContext(this, ""), indent, highlight?.getParser())
+            + this.#parser.toString(Reply.makeContext(this, ""), indent, highlight)
     }
 }

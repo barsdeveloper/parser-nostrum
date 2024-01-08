@@ -6,26 +6,8 @@ export default class Parser {
     static indentation = "    "
     static highlight = "Last valid parser"
 
-    /** @protected */
-    predicate = v => this === v || v instanceof Function && this instanceof v
-
     /** @type {(new (...args: any) => Parser) & typeof Parser} */
     Self
-
-    /**
-     * @param {Result<any>} a
-     * @param {Result<any>} b
-     */
-    static mergeResults(a, b) {
-        if (!b) {
-            return a
-        }
-        return /** @type {typeof a} */({
-            status: a.status,
-            position: a.position,
-            value: a.value,
-        })
-    }
 
     /**
      * @param {String} target

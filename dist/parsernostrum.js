@@ -1,37 +1,30 @@
-/**
- * @template Value
- * @typedef {{
- *     status: Boolean,
- *     value: Value,
- *     position: Number,
- * }} Result
- */
-
 class Reply {
 
     /**
-     * @template Value
+     * @template T
      * @param {Number} position
-     * @param {Value} value
+     * @param {T} value
+     * @returns {Result<T>}
      */
     static makeSuccess(position, value) {
-        return /** @type {Result<Value>} */({
+        return {
             status: true,
             value: value,
             position: position,
-        })
+        }
     }
 
     /**
-     * @template Value
      * @param {Number} position
+     * @param {Parser<any>} parser
+     * @returns {Result<Parser<any>>}
      */
-    static makeFailure(position) {
-        return /** @type {Result<Value>} */({
+    static makeFailure(position, parser = null) {
+        return {
             status: false,
-            value: null,
+            value: parser,
             position: position,
-        })
+        }
     }
 
     /** @param {Parsernostrum<Parser<any>>} parsernostrum */
@@ -48,26 +41,31 @@ class Reply {
 class Parser {
 
     static indentation = "    "
-
-    /** @protected */
-    predicate = v => this === v || v instanceof Function && this instanceof v
+    static highlight = "Last valid parser"
 
     /** @type {(new (...args: any) => Parser) & typeof Parser} */
     Self
 
     /**
-     * @param {Result<any>} a
-     * @param {Result<any>} b
+     * @param {String} target
+     * @param {String} value
      */
-    static mergeResults(a, b) {
-        if (!b) {
-            return a
+    static appendBeforeHighlight(target, value) {
+        if (target.endsWith(Parser.highlight)) {
+            target = target.replace(/(?=(?:\n|^).+$)/, value);
+        } else {
+            target += value;
         }
-        return /** @type {typeof a} */({
-            status: a.status,
-            position: a.position,
-            value: a.value,
-        })
+        return target
+    }
+
+    /** @param {String} value */
+    static lastRowLength(value, firstRowPadding = 0) {
+        // This regex always matches and group 2 (content of the last row) is always there
+        const match = value.match(/(?:\n|(^))([^\n]*)$/);
+        // Group 1 tells wheter or not it matched the first row (last row is also first row)
+        const additional = match[1] !== undefined ? firstRowPadding : 0;
+        return match[2].length + additional
     }
 
     constructor() {
@@ -92,25 +90,27 @@ class Parser {
     /**
      * @param {Context} context
      * @param {Number} position
-     * @returns {Result<T>}
+     * @returns {Result<T> | Result<Parser>}
      */
     parse(context, position) {
         return null
     }
 
-    toString(context = Reply.makeContext(null, ""), indent = 0) {
+    /** @param {Parser<any>} highlight */
+    toString(context = Reply.makeContext(null, ""), indent = 0, highlight = null) {
         if (context.visited.has(this)) {
             return "<...>" // Recursive parser
         }
         context.visited.set(this, null);
-        return this.doToString(context, indent)
+        return this.doToString(context, indent, highlight)
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         return `${this.constructor.name} does not implement toString()`
     }
 }
@@ -143,18 +143,23 @@ class StringParser extends Parser {
         const value = context.input.substring(position, end);
         return this.#value === value
             ? Reply.makeSuccess(end, this.#value)
-            : /** @type {Result<T>} */(Reply.makeFailure(position))
+            : Reply.makeFailure(position)
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         const inlined = this.value.replaceAll("\n", "\\n");
-        return this.value.length !== 1 || this.value.trim() !== this.value
+        let result = !this.value.match(/^[a-zA-Z]$/)
             ? `"${inlined.replaceAll('"', '\\"')}"`
-            : inlined
+            : inlined;
+        if (highlight === this) {
+            result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight;
+        }
+        return result
     }
 }
 
@@ -174,9 +179,11 @@ class SuccessParser extends StringParser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         return "<SUCCESS>"
+            + (highlight === this ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}` : "")
     }
 }
 
@@ -185,6 +192,12 @@ class SuccessParser extends StringParser {
  * @extends Parser<ParserValue<T>>
  */
 class AlternativeParser extends Parser {
+
+    static highlightRegexp = new RegExp(
+        // Matches the beginning of a row containing Parser.highlight only when after the first row of an alternative
+        String.raw`(?<=[^\S\n]*\| .*\n)^(?=[^\S\n]*\^+ ${Parser.highlight}(?:\n|$))`,
+        "m"
+    )
 
     #parsers
     get parsers() {
@@ -217,36 +230,46 @@ class AlternativeParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        let result;
+        let furthest = Reply.makeFailure(position);
         for (let i = 0; i < this.#parsers.length; ++i) {
-            result = this.#parsers[i].parse(context, position);
+            const result = this.#parsers[i].parse(context, position);
             if (result.status) {
                 return result
             }
+            if (result.position > furthest.position && result.value) {
+                furthest = result;
+            }
         }
-        return Reply.makeFailure(position)
+        return furthest
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         const indentation = Parser.indentation.repeat(indent);
         const deeperIndentation = Parser.indentation.repeat(indent + 1);
         if (this.#parsers.length === 2 && this.#parsers[1] instanceof SuccessParser) {
-            let result = this.#parsers[0].toString(context, indent);
+            let result = this.#parsers[0].toString(context, indent, highlight);
             if (!(this.#parsers[0] instanceof StringParser) && !context.visited.has(this.#parsers[0])) {
                 result = "<" + result + ">";
             }
             result += "?";
             return result
         }
-        return "ALT<\n"
-            + deeperIndentation + this.#parsers
-                .map(p => p.toString(context, indent + 1))
-                .join("\n" + deeperIndentation + "| ")
-            + "\n" + indentation + ">"
+        let serialized = this.#parsers
+            .map(p => p.toString(context, indent + 1, highlight))
+            .join("\n" + deeperIndentation + "| ");
+        if (highlight) {
+            serialized = serialized.replace(AlternativeParser.highlightRegexp, "  ");
+        }
+        let result = "ALT<\n"
+            + (highlight === this ? `${indentation}^^^ ${Parser.highlight}\n` : "")
+            + deeperIndentation + serialized
+            + "\n" + indentation + ">";
+        return result
     }
 }
 
@@ -291,25 +314,46 @@ class ChainedParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        let result = this.#parser.parse(context, position);
-        if (!result.status) {
-            return result
+        const outcome = this.#parser.parse(context, position);
+        if (!outcome.status) {
+            return outcome
         }
-        result = this.#fn(result.value, context.input, result.position)?.getParser().parse(context, result.position)
-            ?? Reply.makeFailure(result.position);
+        const result = this.#fn(outcome.value, context.input, outcome.position)
+            .getParser()
+            .parse(context, outcome.position);
+        if (!result) {
+            return outcome
+        }
         return result
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return this.#parser.toString(context, indent) + " => chained<f()>"
+    doToString(context, indent, highlight) {
+        const serialized = "chained<f()>";
+        let result = this.#parser.toString(context, indent, highlight);
+        if (highlight === this) {
+            result +=
+                " => "
+                + serialized
+                + "\n"
+                // Group 1 is the portion between the last newline and end or the whole text
+                + Parser.indentation.repeat(indent)
+                + " ".repeat(result.match(/(?:\n|^)([^\n]+)$/)?.[1].length + 4)
+                + "^".repeat(serialized.length)
+                + " "
+                + Parser.highlight;
+        } else {
+            result = Parser.appendBeforeHighlight(result, " => " + serialized);
+        }
+        return result
     }
 }
 
-/** @extends Parser<String> */
+/** @extends Parser<any> */
 class FailureParser extends Parser {
 
     static instance = new FailureParser()
@@ -325,9 +369,11 @@ class FailureParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         return "<FAILURE>"
+            + (highlight === this ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}` : "")
     }
 }
 
@@ -382,9 +428,10 @@ class LazyParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return this.resolve().toString(context, indent)
+    doToString(context, indent, highlight) {
+        return this.resolve().toString(context, indent, highlight === this ? this.#resolvedPraser : highlight)
     }
 }
 
@@ -439,25 +486,31 @@ class Lookahead extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        if (
-            this.#type === Lookahead.Type.NEGATIVE_BEHIND
-            || this.#type === Lookahead.Type.POSITIVE_BEHIND
-        ) {
-            throw new Error("Lookbehind is not implemented yet")
-        } else {
-            const result = this.#parser.parse(context, position);
-            return result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
-                ? Reply.makeSuccess(position, "")
-                : Reply.makeFailure(position)
-        }
+        const result = this.#parser.parse(context, position);
+        return result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
+            ? Reply.makeSuccess(position, "")
+            : Reply.makeFailure(position)
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return "(" + this.#type + this.#parser.toString(context, indent) + ")"
+    doToString(context, indent, highlight) {
+        let result = "(" + this.#type + this.#parser.toString(context, indent, highlight) + ")";
+        if (highlight === this) {
+            result = result.replace(
+                /(\n)|$/,
+                "\n"
+                + Parser.indentation.repeat(indent)
+                + "^".repeat(this.#type.length + 1)
+                + " "
+                + Parser.highlight
+                + "$1"
+            );
+        }
+        return result
     }
 }
 
@@ -516,13 +569,16 @@ class MapParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         let serializedMapper = this.#mapper.toString();
         if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
             serializedMapper = "(...) => { ... }";
         }
-        return this.#parser.toString(context, indent) + ` -> map<${serializedMapper}>`
+        let result = this.#parser.toString(context, indent, highlight === this ? this.#parser : highlight);
+        result = Parser.appendBeforeHighlight(result, ` -> map<${serializedMapper}>`);
+        return result
     }
 }
 
@@ -562,6 +618,7 @@ class RegExpParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      */
+    // @ts-expect-error
     parse(context, position) {
         const match = this.#anchoredRegexp.exec(context.input.substring(position));
         return match
@@ -572,9 +629,14 @@ class RegExpParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return "/" + this.#regexp.source + "/"
+    doToString(context, indent, highlight) {
+        let result = "/" + this.#regexp.source + "/";
+        if (highlight === this) {
+            result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight;
+        }
+        return result
     }
 }
 
@@ -612,12 +674,12 @@ class SequenceParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        const value = new Array(this.#parsers.length);
-        const result = /** @type {Result<ParserValue<T>>} */(Reply.makeSuccess(position, value));
+        const value = /** @type {ParserValue<T>} */(new Array(this.#parsers.length));
+        const result = Reply.makeSuccess(position, value);
         for (let i = 0; i < this.#parsers.length; ++i) {
             const outcome = this.#parsers[i].parse(context, result.position);
             if (!outcome.status) {
-                return outcome
+                return Reply.makeFailure(result.position, i > 0 ? this.#parsers[i - 1] : null)
             }
             result.value[i] = outcome.value;
             result.position = outcome.position;
@@ -628,13 +690,15 @@ class SequenceParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, highlight) {
         const indentation = Parser.indentation.repeat(indent);
         const deeperIndentation = Parser.indentation.repeat(indent + 1);
         return "SEQ<\n"
+            + (highlight === this ? `${indentation}^^^ ${Parser.highlight}\n` : "")
             + this.#parsers
-                .map(p => deeperIndentation + p.toString(context, indent + 1))
+                .map(p => deeperIndentation + p.toString(context, indent + 1, highlight))
                 .join("\n")
             + "\n" + indentation + ">"
     }
@@ -690,14 +754,12 @@ class TimesParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        const value = [];
-        const result = /** @type {Result<ParserValue<T>[]>} */(
-            Reply.makeSuccess(position, value)
-        );
+        const value = /** @type {ParserValue<T>[]} */([]);
+        const result = Reply.makeSuccess(position, value);
         for (let i = 0; i < this.#max; ++i) {
             const outcome = this.#parser.parse(context, result.position);
             if (!outcome.status) {
-                return i >= this.#min ? result : outcome
+                return i >= this.#min ? result : Reply.makeFailure(position)
             }
             result.value.push(outcome.value);
             result.position = outcome.position;
@@ -708,18 +770,30 @@ class TimesParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Parser<any>} highlight
      */
-    doToString(context, indent = 0) {
-        return this.parser.toString(context, indent)
-            + (
-                this.#min === 0 && this.#max === 1 ? "?"
-                    : this.#min === 0 && this.#max === Number.POSITIVE_INFINITY ? "*"
-                        : this.#min === 1 && this.#max === Number.POSITIVE_INFINITY ? "+"
-                            : "{"
-                            + this.#min
-                            + (this.#min !== this.#max ? "," + this.#max : "")
-                            + "}"
-            )
+    doToString(context, indent, highlight) {
+        let result = this.parser.toString(context, indent, highlight);
+        const serialized =
+            this.#min === 0 && this.#max === 1 ? "?"
+                : this.#min === 0 && this.#max === Number.POSITIVE_INFINITY ? "*"
+                    : this.#min === 1 && this.#max === Number.POSITIVE_INFINITY ? "+"
+                        : "{"
+                        + this.#min
+                        + (this.#min !== this.#max ? "," + this.#max : "")
+                        + "}";
+        if (highlight === this) {
+            result +=
+                serialized
+                + "\n"
+                + " ".repeat(Parser.lastRowLength(result, Parser.indentation.length * indent))
+                + "^".repeat(serialized.length)
+                + " "
+                + Parser.highlight;
+        } else {
+            result = Parser.appendBeforeHighlight(result, serialized);
+        }
+        return result
     }
 }
 
@@ -967,19 +1041,21 @@ class Parsernostrum {
      * @return {Parsernostrum<T>}
      */
     assert(fn) {
-        return /** @type {Parsernostrum<T>} */(this.chain((v, input, position) => fn(v, input, position)
+        // @ts-expect-error
+        return this.chain((v, input, position) => fn(v, input, position)
             ? this.Self.success().map(() => v)
             : this.Self.failure()
-        ))
+        )
     }
 
     join(value = "") {
         return this.map(Parsernostrum.#joiner)
     }
 
-    toString(indent = 0, newline = false) {
+    /** @param {Parsernostrum<Parser<any>>} highlight */
+    toString(indent = 0, newline = false, highlight = null) {
         return (newline ? "\n" + Parser.indentation.repeat(indent) : "")
-            + this.#parser.toString(Reply.makeContext(this, ""), indent)
+            + this.#parser.toString(Reply.makeContext(this, ""), indent, highlight?.getParser())
     }
 }
 

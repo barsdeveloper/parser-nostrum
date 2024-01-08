@@ -80,7 +80,6 @@ export default class AlternativeParser extends Parser {
             .join("\n" + deeperIndentation + "| ")
         if (highlight) {
             serialized = serialized.replace(AlternativeParser.highlightRegexp, "  ")
-
         }
         let result = "ALT<\n"
             + (highlight === this ? `${indentation}^^^ ${Parser.highlight}\n` : "")

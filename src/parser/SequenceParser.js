@@ -58,9 +58,7 @@ export default class SequenceParser extends Parser {
         const deeperIndentation = Parser.indentation.repeat(indent + 1)
         return "SEQ<\n"
             + (highlight === this ? `${indentation}^^^ ${Parser.highlight}\n` : "")
-            + this.#parsers
-                .map(p => deeperIndentation + p.toString(context, indent + 1, highlight))
-                .join("\n")
+            + this.#parsers.map(p => deeperIndentation + p.toString(context, indent + 1, highlight)).join("\n")
             + "\n" + indentation + ">"
     }
 }
