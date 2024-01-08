@@ -31,6 +31,12 @@ export default class Parsernostrum {
     /** @param {[any, any, ...any]|RegExpExecArray} param0 */
     static #secondElementGetter = ([_, v]) => v
     static #arrayFlatter = ([first, rest]) => [first, ...rest]
+    /**
+     * @template T
+     * @param {T} v
+     * @returns {T extends Array ? String : T}
+     */
+    // @ts-expect-error
     static #joiner = v => v instanceof Array ? v.join("") : v
     static #createEscapeable = character => String.raw`[^${character}\\]*(?:\\.[^${character}\\]*)*`
     static #numberRegex = /[-\+]?(?:\d*\.)?\d+/
@@ -133,7 +139,7 @@ export default class Parsernostrum {
                 + `Input: ${segment}\n`
                 + "       "
                 + " ".repeat(offset)
-                + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.position})\n\n`
+                + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.position})${result.position === input.length ? ", parsing reached end of string" : ""}\n\n`
                 + `Last valid parser matched:`
                 + this.toString(1, true, result.value)
                 + "\n"
