@@ -41,8 +41,8 @@ export default class RegExpParser extends Parser {
     parse(context, position) {
         const match = this.#anchoredRegexp.exec(context.input.substring(position))
         return match
-            ? Reply.makeSuccess(position + match[0].length, this.#group >= 0 ? match[this.#group] : match)
-            : Reply.makeFailure(position)
+            ? Reply.makeSuccess(position + match[0].length, this.#group >= 0 ? match[this.#group] : match, this)
+            : Reply.makeFailure(position, this)
     }
 
     /**

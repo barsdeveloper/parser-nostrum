@@ -28,8 +28,8 @@ export default class StringParser extends Parser {
         const end = position + this.#value.length
         const value = context.input.substring(position, end)
         return this.#value === value
-            ? Reply.makeSuccess(end, this.#value)
-            : Reply.makeFailure(position)
+            ? Reply.makeSuccess(end, this.#value, this)
+            : Reply.makeFailure(position, this)
     }
 
     /**

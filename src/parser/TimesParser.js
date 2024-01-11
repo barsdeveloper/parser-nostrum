@@ -52,11 +52,11 @@ export default class TimesParser extends Parser {
      */
     parse(context, position) {
         const value = /** @type {ParserValue<T>[]} */([])
-        const result = Reply.makeSuccess(position, value)
+        const result = Reply.makeSuccess(position, value, this)
         for (let i = 0; i < this.#max; ++i) {
             const outcome = this.#parser.parse(context, result.position)
             if (!outcome.status) {
-                return i >= this.#min ? result : Reply.makeFailure(position)
+                return i >= this.#min ? result : Reply.makeFailure(position, this)
             }
             result.value.push(outcome.value)
             result.position = outcome.position

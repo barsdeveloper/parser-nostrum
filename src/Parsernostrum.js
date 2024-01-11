@@ -123,25 +123,31 @@ export default class Parsernostrum {
         const result = this.run(input)
         if (!result.status) {
             const chunkLength = 20
-            const string = (input.length > chunkLength ? input.substring(0, chunkLength - 3) + "..." : input).replaceAll('"', '\\"')
+            const position = Parsernostrum.lineColumnFromOffset(input, result.position)
+            const string = (input.length > chunkLength ? `${input.substring(0, chunkLength - 3)}...` : input)
+                .replaceAll(/\n|(")/g, (v, grp) => grp ? '\\"' : "\\n")
+            let offset = Math.min( position.column - 1, chunkLength / 2)
             let segment = input.substring(result.position - chunkLength / 2, result.position + chunkLength / 2)
-            let offset = result.position
+                .replaceAll(/\n|(")/g, (v, grp) => {
+                    ++offset
+                    return grp ? '\\"' : "\\n"
+                })
             if (result.position > chunkLength / 2) {
                 segment = "..." + segment
-                offset = chunkLength / 2 + 3
+                offset += 3
             }
             if (result.position < input.length - chunkLength / 2) {
                 segment = segment + "..."
             }
-            const position = Parsernostrum.lineColumnFromOffset(input, result.position + 1)
+            segment = segment.replaceAll('"', '\\"')
             throw new Error(
                 `Could not parse "${string}"\n\n`
-                + `Input: ${segment}\n`
-                + "       "
+                + `Input: "${segment}"\n`
+                + "        "
                 + " ".repeat(offset)
                 + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.position})${result.position === input.length ? ", parsing reached end of string" : ""}\n\n`
                 + `Last valid parser matched:`
-                + this.toString(1, true, result.value)
+                + this.toString(1, true, result.parser)
                 + "\n"
             )
         }

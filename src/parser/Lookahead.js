@@ -54,8 +54,8 @@ export default class Lookahead extends Parser {
     parse(context, position) {
         const result = this.#parser.parse(context, position)
         return result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
-            ? Reply.makeSuccess(position, "")
-            : Reply.makeFailure(position)
+            ? Reply.makeSuccess(position, "", this)
+            : Reply.makeFailure(position, this)
     }
 
     /**

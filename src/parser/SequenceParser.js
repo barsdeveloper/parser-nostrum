@@ -36,11 +36,17 @@ export default class SequenceParser extends Parser {
      */
     parse(context, position) {
         const value = /** @type {ParserValue<T>} */(new Array(this.#parsers.length))
-        const result = Reply.makeSuccess(position, value)
+        const result = Reply.makeSuccess(position, value, this)
+        const furthest = Reply.makeFailure()
         for (let i = 0; i < this.#parsers.length; ++i) {
             const outcome = this.#parsers[i].parse(context, result.position)
+            if (outcome.position > furthest.position) {
+                furthest.position = outcome.position
+                furthest.value = outcome.value
+                furthest.parser = outcome.parser
+            }
             if (!outcome.status) {
-                return Reply.makeFailure(result.position, i > 0 ? this.#parsers[i - 1] : null)
+                return furthest
             }
             result.value[i] = outcome.value
             result.position = outcome.position

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test"
+import JsonGrammar from "../src/grammars/JsonGrammar.js"
 import P from "../src/Parsernostrum.js"
 
 test("Test 1", async ({ page }) => {
@@ -12,8 +13,8 @@ test("Test 1", async ({ page }) => {
     expect(error).toEqual(
         'Could not parse "alphaUnrelated"\n'
         + '\n'
-        + 'Input: alphaUnrelated\n'
-        + '            ^ From here (line: 1, column: 7, offset: 5)\n'
+        + 'Input: "alphaUnrelated"\n'
+        + '             ^ From here (line: 1, column: 6, offset: 5)\n'
         + '\n'
         + 'Last valid parser matched:\n'
         + '    SEQ<\n'
@@ -40,8 +41,8 @@ test("Test 2", async ({ page }) => {
     expect(error).toEqual(
         'Could not parse "aaaa"\n'
         + '\n'
-        + 'Input: aaaa\n'
-        + '           ^ From here (line: 1, column: 5, offset: 4), parsing reached end of string\n'
+        + 'Input: "aaaa"\n'
+        + '            ^ From here (line: 1, column: 5, offset: 4), parsing reached end of string\n'
         + '\n'
         + 'Last valid parser matched:\n'
         + '    ALT<\n'
@@ -63,5 +64,40 @@ test("Test 2", async ({ page }) => {
         + '            b\n'
         + '        >\n'
         + '    >\n'
+    )
+})
+
+test("Test JsonGrammar", async ({ page }) => {
+    let error = ""
+    try {
+        JsonGrammar.json.parse(`
+            {
+                "glossary": {
+                    "title": "example glossary",
+                    "GlossDiv": {
+                        "title": "S",
+                        "GlossList": {
+                            "GlossEntry": {
+                                "ID": "SGML",
+                                "SortAs": "SGML",
+                                "GlossTerm": "Standard Generalized Markup Language",
+                                "Acronym": "SGML",
+                                "Abbrev": [ISO 8879:1986",
+                                "GlossDef": {
+                                    "para": "A meta-markup language, used to create markup languages such as DocBook.",
+                                    "GlossSeeAlso": ["GML", "XML"]
+                                },
+                                "GlossSee": "markup"
+                            }
+                        }
+                    }
+                }
+            }
+        `.trim())
+    } catch (e) {
+        error = /** @type {Error} */(e).message
+    }
+    expect(error).toEqual(
+
     )
 })

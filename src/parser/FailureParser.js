@@ -11,7 +11,7 @@ export default class FailureParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        return Reply.makeFailure(position)
+        return Reply.makeFailure(position, this)
     }
 
     /**

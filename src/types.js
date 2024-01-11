@@ -2,10 +2,12 @@
 
 /**
  * @template T
- * @typedef {Object} Result
- * @property {Boolean} status Indicates the success or failure of the operation.
- * @property {T} value The result in case of success or the furthest parser that succeeded in case of failure.
- * @property {Number} position The position in the input string.
+ * @typedef {{
+ *     status: Boolean,
+ *     value: T?,
+ *     position: Number,
+ *     parser: Parser<any>,
+ * }} Result
  */
 
 /**
