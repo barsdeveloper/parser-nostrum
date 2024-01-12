@@ -6,7 +6,8 @@
  *     status: Boolean,
  *     value: T?,
  *     position: Number,
- *     parser: Parser<any>,
+ *     bestParser: Parser<any>,
+ *     bestPosition: Number,
  * }} Result
  */
 

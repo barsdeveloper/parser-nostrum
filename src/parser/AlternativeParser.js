@@ -46,17 +46,22 @@ export default class AlternativeParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        let furthest = Reply.makeFailure()
+        const result = Reply.makeSuccess(0, /** @type {ParserValue<T>} */(""))
         for (let i = 0; i < this.#parsers.length; ++i) {
             const outcome = this.#parsers[i].parse(context, position)
-            if (outcome.status) {
-                return outcome
+            if (outcome.bestPosition > result.bestPosition) {
+                result.bestParser = outcome.bestParser
+                result.bestPosition = outcome.bestPosition
             }
-            if (outcome.position > furthest.position) {
-                furthest = outcome
+            if (outcome.status) {
+                result.value = outcome.value
+                result.position = outcome.position
+                return result
             }
         }
-        return furthest
+        result.status = false
+        result.value = null
+        return result
     }
 
     /**

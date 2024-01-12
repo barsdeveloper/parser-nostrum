@@ -6,25 +6,27 @@ export default class Reply {
      * @param {T} value
      * @returns {Result<T>}
      */
-    static makeSuccess(position, value, parser) {
+    static makeSuccess(position, value, bestParser = null, bestPosition = 0) {
         return {
             status: true,
             value: value,
             position: position,
-            parser: parser,
+            bestParser: bestParser,
+            bestPosition: bestPosition,
         }
     }
 
     /**
-     * @param {Parser<any>} parser
-     * @returns {Result<Parser<any>>}
+     * @param {Parser<any>} bestParser
+     * @returns {Result<null>}
      */
-    static makeFailure(position = 0, parser = null) {
+    static makeFailure(position = 0, bestParser = null, bestPosition = 0) {
         return {
             status: false,
             value: null,
             position: position,
-            parser: parser,
+            bestParser: bestParser,
+            bestPosition: bestPosition,
         }
     }
 

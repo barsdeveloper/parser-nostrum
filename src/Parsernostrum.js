@@ -111,7 +111,6 @@ export default class Parsernostrum {
      * @returns {Result<ParserValue<T>>}
      */
     run(input) {
-        // @ts-expect-error
         return this.#parser.parse(Reply.makeContext(this, input), 0)
     }
 
@@ -123,11 +122,11 @@ export default class Parsernostrum {
         const result = this.run(input)
         if (!result.status) {
             const chunkLength = 20
-            const position = Parsernostrum.lineColumnFromOffset(input, result.position)
+            const position = Parsernostrum.lineColumnFromOffset(input, result.bestPosition)
             const string = (input.length > chunkLength ? `${input.substring(0, chunkLength - 3)}...` : input)
                 .replaceAll(/\n|(")/g, (v, grp) => grp ? '\\"' : "\\n")
-            let offset = Math.min( position.column - 1, chunkLength / 2)
-            let segment = input.substring(result.position - chunkLength / 2, result.position + chunkLength / 2)
+            let offset = Math.min(position.column - 1, chunkLength / 2)
+            let segment = input.substring(result.bestPosition - chunkLength / 2, result.bestPosition + chunkLength / 2)
                 .replaceAll(/\n|(")/g, (v, grp) => {
                     ++offset
                     return grp ? '\\"' : "\\n"
@@ -147,7 +146,7 @@ export default class Parsernostrum {
                 + " ".repeat(offset)
                 + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.position})${result.position === input.length ? ", parsing reached end of string" : ""}\n\n`
                 + `Last valid parser matched:`
-                + this.toString(1, true, result.parser)
+                + this.toString(1, true, result.bestParser)
                 + "\n"
             )
         }
@@ -227,7 +226,6 @@ export default class Parsernostrum {
      * @returns {Parsernostrum<TimesParser<T>>}
      */
     times(min, max = min) {
-        // @ts-expect-error
         return new this.Self(new TimesParser(this.#parser, min, max))
     }
 

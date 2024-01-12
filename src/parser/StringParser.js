@@ -25,11 +25,11 @@ export default class StringParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        const end = position + this.#value.length
-        const value = context.input.substring(position, end)
+        position += this.#value.length
+        const value = context.input.substring(position, position)
         return this.#value === value
-            ? Reply.makeSuccess(end, this.#value, this)
-            : Reply.makeFailure(position, this)
+            ? Reply.makeSuccess(position, this.#value, this, position)
+            : Reply.makeFailure()
     }
 
     /**

@@ -30,7 +30,7 @@ test("Test 2", async ({ page }) => {
         P.seq(P.str("aaa"), P.str("alpha")),
         P.seq(P.str("aaaa"), P.str("bc")),
         P.seq(P.str("aaaaa"), P.str("xyz")),
-        P.seq(P.str("aa"), P.str("b"))
+        P.seq(P.str("aa"), P.str("b")),
     )
     let error = ""
     try {
@@ -67,6 +67,22 @@ test("Test 2", async ({ page }) => {
     )
 })
 
+test("Test 3", async ({ page }) => {
+    const p = P.alt(
+        P.seq(P.str("a"), P.str(":"), P.str("1")),
+        P.seq(P.str("b"), P.str(":"), P.str("2")),
+    )
+    let error = ""
+    try {
+        p.parse("aaaa")
+    } catch (e) {
+        error = /** @type {Error} */(e).message
+    }
+    expect(error).toEqual(
+        ``
+    )
+})
+
 test("Test JsonGrammar", async ({ page }) => {
     let error = ""
     try {
@@ -97,7 +113,7 @@ test("Test JsonGrammar", async ({ page }) => {
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
+    expect(error). toEqual(
 
     )
 })

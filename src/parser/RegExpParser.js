@@ -40,9 +40,12 @@ export default class RegExpParser extends Parser {
     // @ts-expect-error
     parse(context, position) {
         const match = this.#anchoredRegexp.exec(context.input.substring(position))
+        if (match) {
+            position += match[0].length
+        }
         return match
-            ? Reply.makeSuccess(position + match[0].length, this.#group >= 0 ? match[this.#group] : match, this)
-            : Reply.makeFailure(position, this)
+            ? Reply.makeSuccess(position, this.#group >= 0 ? match[this.#group] : match, this, position)
+            : Reply.makeFailure()
     }
 
     /**

@@ -53,7 +53,7 @@ export default class Parser {
     /**
      * @param {Context} context
      * @param {Number} position
-     * @returns {Result<T> | Result<Parser>}
+     * @returns {Result<T>}
      */
     parse(context, position) {
         return null
