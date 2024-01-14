@@ -36,6 +36,42 @@ export default class Parser {
         this.Self = this.constructor
     }
 
+    /** @param {Context} context */
+    isHighlighted(context) {
+        if (context.highlightedPath.length === 0) {
+            return context.highlightedParser === this
+        }
+        let i
+        let j
+        loop:
+        for (
+            i = context.path.length - 1,
+            j = context.highlightedPath.length - 1;
+            i >= 0 && j >= 0;
+            --i,
+            --j
+        ) {
+            if (context.path[i] !== context.highlightedPath[j]) {
+                if (j > i) {
+                    const initial = context.highlightedPath[++j]
+                    while (--j >= 0) {
+                        if (context.highlightedPath[j] === initial) {
+                            // Retry with the same i
+                            ++i
+                            continue loop
+                        }
+                    }
+                }
+                return false
+            }
+        }
+        return true
+    }
+
+    /** @param {Context} context */
+    isVisited(context) {
+        return context.path.includes(this)
+    }
 
     unwrap() {
         return /** @type {Parser<T>[]} */([])
@@ -59,21 +95,22 @@ export default class Parser {
         return null
     }
 
-    /** @param {Parser<any>} highlight */
-    toString(context = Reply.makeContext(null, ""), indent = 0, highlight = null) {
-        if (context.visited.has(this)) {
+    toString(context = Reply.makeContext(null, ""), indent = 0) {
+        if (this.isVisited(context)) {
             return "<...>" // Recursive parser
         }
-        context.visited.set(this, null)
-        return this.doToString(context, indent, highlight)
+        context.path.push(this)
+        const result = this.doToString(context, indent)
+        context.path.pop()
+        return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
+    doToString(context, indent) {
         return `${this.constructor.name} does not implement toString()`
     }
 }

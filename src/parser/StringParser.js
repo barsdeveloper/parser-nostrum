@@ -25,24 +25,27 @@ export default class StringParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        position += this.#value.length
-        const value = context.input.substring(position, position)
-        return this.#value === value
-            ? Reply.makeSuccess(position, this.#value, this, position)
+        context.path.push(this)
+        const end = position + this.#value.length
+        const value = context.input.substring(position, end)
+        const result = this.#value === value
+            ? Reply.makeSuccess(end, this.#value, [...context.path], end)
             : Reply.makeFailure()
+        context.path.pop()
+        return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
+    doToString(context, indent) {
         const inlined = this.value.replaceAll("\n", "\\n")
         let result = !this.value.match(/^[a-zA-Z]$/)
             ? `"${inlined.replaceAll('"', '\\"')}"`
             : inlined
-        if (highlight === this) {
+        if (this.isHighlighted(context)) {
             result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight
         }
         return result

@@ -6,7 +6,7 @@
  *     status: Boolean,
  *     value: T?,
  *     position: Number,
- *     bestParser: Parser<any>,
+ *     bestParser: Parser<any>[],
  *     bestPosition: Number,
  * }} Result
  */
@@ -15,7 +15,9 @@
  * @typedef {{
  *     parsernostrum: Parsernostrum,
  *     input: String,
- *     visited: Map<Parser<any>, any>,
+ *     path: Parser<any>[],
+ *     highlightedPath: Parser<any>[],
+ *     highlightedParser: Parser<any>,
  * }} Context
  */
 

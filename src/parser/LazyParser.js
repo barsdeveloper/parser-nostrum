@@ -44,16 +44,26 @@ export default class LazyParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
+        context.path.push(this)
         this.resolve()
-        return this.#resolvedPraser.parse(context, position)
+        const result = this.#resolvedPraser.parse(context, position)
+        context.path.pop()
+        return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
-        return this.resolve().toString(context, indent, highlight === this ? this.#resolvedPraser : highlight)
+    doToString(context, indent) {
+        if (this.isHighlighted(context)) {
+            if (context.highlightedPath.length > 0) {
+                context.highlightedPath.push(this.#resolvedPraser)
+            } else {
+                context.highlightedParser = this.#resolvedPraser
+            }
+        }
+        return this.resolve().toString(context, indent)
     }
 }

@@ -210,7 +210,7 @@ test("Test 1", async ({ page }) => {
             "alpha"
             | SEQ<
               ^^^ ${Parser.highlight}
-                "beta" -> map<v => v + 1>?
+                <"beta" -> map<v => v + 1>>?
                 "gamma"*
             >+
         >`
@@ -219,7 +219,7 @@ test("Test 1", async ({ page }) => {
         ALT<
             "alpha"
             | SEQ<
-                "beta" -> map<v => v + 1>?
+                <"beta" -> map<v => v + 1>>?
                 "gamma"*
             >+
              ^ ${Parser.highlight}

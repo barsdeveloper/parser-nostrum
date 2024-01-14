@@ -17,10 +17,10 @@ export default class SuccessParser extends StringParser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
+    doToString(context, indent) {
         return "<SUCCESS>"
-            + (highlight === this ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}` : "")
+            + (this.isHighlighted(context) ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}` : "")
     }
 }

@@ -111,7 +111,11 @@ export default class Parsernostrum {
      * @returns {Result<ParserValue<T>>}
      */
     run(input) {
-        return this.#parser.parse(Reply.makeContext(this, input), 0)
+        const result = this.#parser.parse(Reply.makeContext(this, input), 0)
+        if (result.position !== input.length) {
+            result.status = false
+        }
+        return result
     }
 
     /**
@@ -121,30 +125,47 @@ export default class Parsernostrum {
     parse(input) {
         const result = this.run(input)
         if (!result.status) {
-            const chunkLength = 20
+            const chunkLength = 60
+            const chunkRange = /** @type {[Number, Number]} */(
+                [Math.ceil(chunkLength / 2), Math.floor(chunkLength / 2)]
+            )
             const position = Parsernostrum.lineColumnFromOffset(input, result.bestPosition)
-            const string = (input.length > chunkLength ? `${input.substring(0, chunkLength - 3)}...` : input)
-                .replaceAll(/\n|(")/g, (v, grp) => grp ? '\\"' : "\\n")
-            let offset = Math.min(position.column - 1, chunkLength / 2)
-            let segment = input.substring(result.bestPosition - chunkLength / 2, result.bestPosition + chunkLength / 2)
-                .replaceAll(/\n|(")/g, (v, grp) => {
-                    ++offset
-                    return grp ? '\\"' : "\\n"
-                })
-            if (result.position > chunkLength / 2) {
+            let bestPosition = result.bestPosition
+            const inlineInput = input.replaceAll(
+                /^(\s)+|\s{6,}|\s*?\n\s*/g,
+                (m, startingSpace, offset) => {
+                    let replaced = startingSpace ? "..." : " ... "
+                    if (offset <= result.bestPosition) {
+                        if (result.bestPosition < offset + m.length) {
+                            bestPosition -= result.bestPosition - offset
+                        } else {
+                            bestPosition -= m.length - replaced.length
+                        }
+                    }
+                    return replaced
+                }
+            )
+            const string = inlineInput.substring(0, chunkLength).trimEnd()
+            const leadingWhitespaceLength = Math.min(
+                input.substring(result.bestPosition - chunkRange[0]).match(/^\s*/)[0].length,
+                chunkRange[0] - 1,
+            )
+            let offset = Math.min(bestPosition, chunkRange[0] - leadingWhitespaceLength)
+            chunkRange[0] = Math.max(0, bestPosition - chunkRange[0]) + leadingWhitespaceLength
+            chunkRange[1] = Math.min(input.length, chunkRange[0] + chunkLength)
+            let segment = inlineInput.substring(...chunkRange)
+            if (chunkRange[0] > 0) {
                 segment = "..." + segment
                 offset += 3
             }
-            if (result.position < input.length - chunkLength / 2) {
+            if (chunkRange[1] < inlineInput.length - 1) {
                 segment = segment + "..."
             }
-            segment = segment.replaceAll('"', '\\"')
             throw new Error(
-                `Could not parse "${string}"\n\n`
-                + `Input: "${segment}"\n`
-                + "        "
-                + " ".repeat(offset)
-                + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.position})${result.position === input.length ? ", parsing reached end of string" : ""}\n\n`
+                `Could not parse: ${string}\n\n`
+                + `Input: ${segment}\n`
+                + "       " + " ".repeat(offset)
+                + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
                 + `Last valid parser matched:`
                 + this.toString(1, true, result.bestParser)
                 + "\n"
@@ -300,12 +321,18 @@ export default class Parsernostrum {
         return this.map(Parsernostrum.#joiner)
     }
 
-    /** @param {Parsernostrum<Parser<any>> | Parser<any>} highlight */
+    /** @param {Parsernostrum<Parser<any>> | Parser<any> | Parser<any>[]} highlight */
     toString(indent = 0, newline = false, highlight = null) {
         if (highlight instanceof Parsernostrum) {
             highlight = highlight.getParser()
         }
+        const context = Reply.makeContext(this, "")
+        if (highlight instanceof Array) {
+            context.highlightedPath = highlight
+        } else {
+            context.highlightedParser = highlight
+        }
         return (newline ? "\n" + Parser.indentation.repeat(indent) : "")
-            + this.#parser.toString(Reply.makeContext(this, ""), indent, highlight)
+            + this.#parser.toString(context, indent)
     }
 }

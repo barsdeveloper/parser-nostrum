@@ -4,28 +4,29 @@ export default class Reply {
      * @template T
      * @param {Number} position
      * @param {T} value
+     * @param {Parser<any>[]} bestPath
      * @returns {Result<T>}
      */
-    static makeSuccess(position, value, bestParser = null, bestPosition = 0) {
+    static makeSuccess(position, value, bestPath = [], bestPosition = 0) {
         return {
             status: true,
             value: value,
             position: position,
-            bestParser: bestParser,
+            bestParser: bestPath,
             bestPosition: bestPosition,
         }
     }
 
     /**
-     * @param {Parser<any>} bestParser
+     * @param {Parser<any>[]} bestPath
      * @returns {Result<null>}
      */
-    static makeFailure(position = 0, bestParser = null, bestPosition = 0) {
+    static makeFailure(position = 0, bestPath = [], bestPosition = 0) {
         return {
             status: false,
             value: null,
             position: position,
-            bestParser: bestParser,
+            bestParser: bestPath,
             bestPosition: bestPosition,
         }
     }
@@ -35,7 +36,9 @@ export default class Reply {
         return /** @type {Context} */({
             parsernostrum: parsernostrum,
             input: input,
-            visited: new Map(),
+            path: [],
+            highlightedPath: [],
+            highlightedParser: null,
         })
     }
 }

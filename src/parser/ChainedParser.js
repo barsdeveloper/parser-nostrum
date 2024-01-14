@@ -42,28 +42,32 @@ export default class ChainedParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
+        context.path.push(this)
         const outcome = this.#parser.parse(context, position)
         if (!outcome.status) {
+            context.path.pop()
             return outcome
         }
         const result = this.#fn(outcome.value, context.input, outcome.position)
             .getParser()
             .parse(context, outcome.position)
         if (!result) {
+            context.path.pop()
             return outcome
         }
+        context.path.pop()
         return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
+    doToString(context, indent) {
         const serialized = "chained<f()>"
-        let result = this.#parser.toString(context, indent, highlight)
-        if (highlight === this) {
+        let result = this.#parser.toString(context, indent)
+        if (this.isHighlighted(context)) {
             result +=
                 " => "
                 + serialized

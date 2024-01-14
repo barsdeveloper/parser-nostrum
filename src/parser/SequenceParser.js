@@ -35,6 +35,7 @@ export default class SequenceParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
+        context.path.push(this)
         const value = /** @type {ParserValue<T>} */(new Array(this.#parsers.length))
         const result = Reply.makeSuccess(position, value)
         for (let i = 0; i < this.#parsers.length; ++i) {
@@ -46,25 +47,27 @@ export default class SequenceParser extends Parser {
             if (!outcome.status) {
                 result.status = false
                 result.value = null
-                return result
+                break
             }
             result.value[i] = outcome.value
             result.position = outcome.position
         }
+        context.path.pop()
         return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
+    doToString(context, indent) {
         const indentation = Parser.indentation.repeat(indent)
         const deeperIndentation = Parser.indentation.repeat(indent + 1)
-        return "SEQ<\n"
-            + (highlight === this ? `${indentation}^^^ ${Parser.highlight}\n` : "")
-            + this.#parsers.map(p => deeperIndentation + p.toString(context, indent + 1, highlight)).join("\n")
+        const result = "SEQ<\n"
+            + (this.isHighlighted(context) ? `${indentation}^^^ ${Parser.highlight}\n` : "")
+            + this.#parsers.map(p => deeperIndentation + p.toString(context, indent + 1)).join("\n")
             + "\n" + indentation + ">"
+        return result
     }
 }

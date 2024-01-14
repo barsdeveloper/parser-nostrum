@@ -51,8 +51,9 @@ export default class TimesParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
+        context.path.push(this)
         const value = /** @type {ParserValue<T>[]} */([])
-        const result = Reply.makeSuccess(position, value, this)
+        const result = Reply.makeSuccess(position, value, [...context.path])
         for (let i = 0; i < this.#max; ++i) {
             const outcome = this.#parser.parse(context, result.position)
             if (outcome.bestPosition > result.bestPosition) {
@@ -64,21 +65,22 @@ export default class TimesParser extends Parser {
                     result.status = false
                     result.value = null
                 }
-                return result
+                break
             }
             result.value.push(outcome.value)
             result.position = outcome.position
         }
+        context.path.pop()
         return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
-        let result = this.parser.toString(context, indent, highlight)
+    doToString(context, indent) {
+        let result = this.parser.toString(context, indent)
         const serialized =
             this.#min === 0 && this.#max === 1 ? "?"
                 : this.#min === 0 && this.#max === Number.POSITIVE_INFINITY ? "*"
@@ -87,7 +89,7 @@ export default class TimesParser extends Parser {
                         + this.#min
                         + (this.#min !== this.#max ? "," + this.#max : "")
                         + "}"
-        if (highlight === this) {
+        if (this.isHighlighted(context)) {
             result +=
                 serialized
                 + "\n"

@@ -11,16 +11,23 @@ export default class FailureParser extends Parser {
      * @param {Number} position
      */
     parse(context, position) {
-        return Reply.makeFailure(position, this)
+        context.path.push(this)
+        const result = Reply.makeFailure()
+        context.path.pop()
+        return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
-        return "<FAILURE>"
-            + (highlight === this ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}` : "")
+    doToString(context, indent) {
+        const result = "<FAILURE>" + (
+            this.isHighlighted(context)
+                ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}`
+                : ""
+        )
+        return result
     }
 }

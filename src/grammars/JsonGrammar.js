@@ -20,9 +20,7 @@ export default class JsonGrammar {
     static #object = P.seq(
         P.reg(/\{\s*/),
         P.seq(
-            this.#string.map(
-                v =>
-                v),
+            this.#string,
             P.reg(/\s*:\s*/),
             P.lazy(() => this.json),
         )

@@ -45,24 +45,33 @@ export default class MapParser extends Parser {
      * @returns {Result<P>}
      */
     parse(context, position) {
+        context.path.push(this)
         const result = this.#parser.parse(context, position)
         if (result.status) {
             result.value = this.#mapper(result.value)
         }
+        context.path.pop()
         return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Parser<any>} highlight
+     * @param {Number} indent
      */
-    doToString(context, indent, highlight) {
+    doToString(context, indent) {
         let serializedMapper = this.#mapper.toString()
         if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
             serializedMapper = "(...) => { ... }"
         }
-        let result = this.#parser.toString(context, indent, highlight === this ? this.#parser : highlight)
+        if (this.isHighlighted(context)) {
+            if (context.highlightedPath.length > 0) {
+                context.highlightedPath.push(this.#parser)
+            } else {
+                context.highlightedParser = this.#parser
+            }
+        }
+        let result = this.#parser.toString(context, indent)
         result = Parser.appendBeforeHighlight(result, ` -> map<${serializedMapper}>`)
         return result
     }
