@@ -1,45 +1,50 @@
-/**
- * @template Value
- * @typedef {{
- *     status: Boolean,
- *     value: Value,
- *     position: Number,
- * }} Result
- */
-
 export default class Reply {
 
     /**
-     * @template Value
+     * @template T
      * @param {Number} position
-     * @param {Value} value
+     * @param {T} value
+     * @param {PathNode} bestPath
+     * @returns {Result<T>}
      */
-    static makeSuccess(position, value) {
-        return /** @type {Result<Value>} */({
+    static makeSuccess(position, value, bestPath = null, bestPosition = 0) {
+        return {
             status: true,
             value: value,
             position: position,
-        })
+            bestParser: bestPath,
+            bestPosition: bestPosition,
+        }
     }
 
     /**
-     * @template Value
-     * @param {Number} position
+     * @param {PathNode} bestPath
+     * @returns {Result<null>}
      */
-    static makeFailure(position) {
-        return /** @type {Result<Value>} */({
+    static makeFailure(position = 0, bestPath = null, bestPosition = 0) {
+        return {
             status: false,
             value: null,
-            position: position,
-        })
+            position,
+            bestParser: bestPath,
+            bestPosition: bestPosition,
+        }
     }
 
     /** @param {Parsernostrum<Parser<any>>} parsernostrum */
     static makeContext(parsernostrum = null, input = "") {
         return /** @type {Context} */({
-            parsernostrum: parsernostrum,
-            input: input,
-            visited: new Map(),
+            parsernostrum,
+            input,
+            highlighted: null,
+        })
+    }
+
+    static makePathNode(parser, index = 0, previous = null) {
+        return /** @type {PathNode} */({
+            parent: previous,
+            parser,
+            index,
         })
     }
 }

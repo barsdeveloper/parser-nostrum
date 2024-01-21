@@ -25,37 +25,49 @@ export default class ChainedParser extends Parser {
         this.#fn = chained
     }
 
-    unwrap() {
-        return [this.#parser]
-    }
-
-    /**
-     * @template {Parser<any>[]} T
-     * @param {T} parsers
-     */
-    wrap(...parsers) {
-        return new ChainedParser(parsers[0], this.#fn)
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      */
-    parse(context, position) {
-        let result = this.#parser.parse(context, position)
-        if (!result.status) {
-            return result
+    parse(context, position, path) {
+        const outcome = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
+        if (!outcome.status) {
+            return outcome
         }
-        result = this.#fn(result.value, context.input, result.position)?.getParser().parse(context, result.position)
-            ?? Reply.makeFailure(result.position)
+        const result = this.#fn(outcome.value, context.input, outcome.position)
+            .getParser()
+            .parse(context, outcome.position)
+        if (outcome.bestPosition > result.bestPosition) {
+            result.bestParser = outcome.bestParser
+            result.bestPosition = outcome.bestPosition
+        }
         return result
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent = 0) {
-        return this.#parser.toString(context, indent) + " => chained<f()>"
+    doToString(context, indent, path) {
+        const serialized = "chained<f()>"
+        let result = this.#parser.toString(context, indent, { parent: path, parser: this.#parser, index: 0 })
+        if (this.isHighlighted(context, path)) {
+            result +=
+                " => "
+                + serialized
+                + "\n"
+                // Group 1 is the portion between the last newline and end or the whole text
+                + Parser.indentation.repeat(indent)
+                + " ".repeat(result.match(/(?:\n|^)([^\n]+)$/)?.[1].length + 4)
+                + "^".repeat(serialized.length)
+                + " "
+                + Parser.highlight
+        } else {
+            result = Parser.appendBeforeHighlight(result, " => " + serialized)
+        }
+        return result
     }
 }

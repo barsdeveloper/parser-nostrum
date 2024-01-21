@@ -9,6 +9,12 @@ import SuccessParser from "./SuccessParser.js"
  */
 export default class AlternativeParser extends Parser {
 
+    static highlightRegexp = new RegExp(
+        // Matches the beginning of a row containing Parser.highlight only when after the first row of an alternative
+        String.raw`(?<=[^\S\n]*\| .*\n)^(?=[^\S\n]*\^+ ${Parser.highlight}(?:\n|$))`,
+        "m"
+    )
+
     #parsers
     get parsers() {
         return this.#parsers
@@ -20,55 +26,65 @@ export default class AlternativeParser extends Parser {
         this.#parsers = parsers
     }
 
-    unwrap() {
-        return [...this.#parsers]
-    }
-
-    /**
-     * @template {Parser<any>[]} T
-     * @param {T} parsers
-     * @returns {AlternativeParser<T>}
-     */
-    wrap(...parsers) {
-        // @ts-expect-error
-        const result = /** @type {AlternativeParser<T>} */(new this.Self(...parsers))
-        return result
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      */
-    parse(context, position) {
-        let result
+    parse(context, position, path) {
+        const result = Reply.makeSuccess(0, /** @type {ParserValue<T>} */(""))
         for (let i = 0; i < this.#parsers.length; ++i) {
-            result = this.#parsers[i].parse(context, position)
-            if (result.status) {
+            const outcome = this.#parsers[i].parse(
+                context,
+                position,
+                { parent: path, parser: this.#parsers[i], index: i }
+            )
+            if (outcome.bestPosition > result.bestPosition) {
+                result.bestParser = outcome.bestParser
+                result.bestPosition = outcome.bestPosition
+            }
+            if (outcome.status) {
+                result.value = outcome.value
+                result.position = outcome.position
                 return result
             }
         }
-        return Reply.makeFailure(position)
+        result.status = false
+        result.value = null
+        return result
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, path) {
         const indentation = Parser.indentation.repeat(indent)
         const deeperIndentation = Parser.indentation.repeat(indent + 1)
         if (this.#parsers.length === 2 && this.#parsers[1] instanceof SuccessParser) {
-            let result = this.#parsers[0].toString(context, indent)
-            if (!(this.#parsers[0] instanceof StringParser) && !context.visited.has(this.#parsers[0])) {
+            let result = this.#parsers[0].toString(
+                context,
+                indent,
+                { parent: path, parser: this.#parsers[0], index: 0 }
+            )
+            if (!(this.#parsers[0] instanceof StringParser)) {
                 result = "<" + result + ">"
             }
             result += "?"
             return result
         }
-        return "ALT<\n"
-            + deeperIndentation + this.#parsers
-                .map(p => p.toString(context, indent + 1))
-                .join("\n" + deeperIndentation + "| ")
+        let serialized = this.#parsers
+            .map((parser, index) => parser.toString(context, indent + 1, { parent: path, parser, index }))
+            .join("\n" + deeperIndentation + "| ")
+        if (context.highlighted) {
+            serialized = serialized.replace(AlternativeParser.highlightRegexp, "  ")
+        }
+        let result = "ALT<\n"
+            + (this.isHighlighted(context, path) ? `${indentation}^^^ ${Parser.highlight}\n` : "")
+            + deeperIndentation + serialized
             + "\n" + indentation + ">"
+        return result
     }
 }

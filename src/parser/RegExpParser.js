@@ -36,19 +36,31 @@ export default class RegExpParser extends Parser {
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      */
-    parse(context, position) {
+    // @ts-expect-error
+    parse(context, position, path) {
         const match = this.#anchoredRegexp.exec(context.input.substring(position))
-        return match
-            ? Reply.makeSuccess(position + match[0].length, this.#group >= 0 ? match[this.#group] : match)
-            : Reply.makeFailure(position)
+        if (match) {
+            position += match[0].length
+        }
+        const result = match
+            ? Reply.makeSuccess(position, this.#group >= 0 ? match[this.#group] : match, path, position)
+            : Reply.makeFailure()
+        return result
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent = 0) {
-        return "/" + this.#regexp.source + "/"
+    doToString(context, indent, path) {
+        let result = "/" + this.#regexp.source + "/"
+        if (this.isHighlighted(context, path)) {
+            result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight
+        }
+        return result
     }
 }

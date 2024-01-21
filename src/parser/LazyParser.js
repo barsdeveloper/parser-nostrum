@@ -24,35 +24,27 @@ export default class LazyParser extends Parser {
         return this.#resolvedPraser
     }
 
-    unwrap() {
-        return [this.resolve()]
-    }
-
-    /**
-     * @template {Parser<any>[]} P
-     * @param {P} parsers
-     */
-    wrap(...parsers) {
-        const parsernostrumConstructor = /** @type {ConstructorType<Parsernostrum<typeof parsers[0]>>} */(
-            this.#parser().constructor
-        )
-        return new LazyParser(() => new parsernostrumConstructor(parsers[0]))
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      */
-    parse(context, position) {
+    parse(context, position, path) {
         this.resolve()
-        return this.#resolvedPraser.parse(context, position)
+        return this.#resolvedPraser.parse(context, position, { parent: path, parser: this.#resolvedPraser, index: 0 })
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent = 0) {
-        return this.resolve().toString(context, indent)
+    doToString(context, indent, path) {
+        const childrenPath = { parent: path, parser: this.#resolvedPraser, index: 0 }
+        if (this.isHighlighted(context, path)) {
+            context.highlighted = context.highlighted instanceof Parser ? this.#resolvedPraser : childrenPath
+        }
+        return this.resolve().toString(context, indent, childrenPath)
     }
 }

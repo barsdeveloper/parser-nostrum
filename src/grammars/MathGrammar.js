@@ -89,7 +89,7 @@ export default class MathGrammar {
     static expressionFragment = P.alt(
         P.seq(
             MathGrammar.#termFragment,
-            MathGrammar.#opFragment
+            MathGrammar.#opFragment,
         ).map(([term, fragment]) => [...term, ...fragment]),
         MathGrammar.#number.map(v => [v]),
     )

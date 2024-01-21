@@ -4,69 +4,124 @@ import Reply from "../Reply.js"
 export default class Parser {
 
     static indentation = "    "
-
-    /** @protected */
-    predicate = v => this === v || v instanceof Function && this instanceof v
+    static highlight = "Last valid parser"
 
     /** @type {(new (...args: any) => Parser) & typeof Parser} */
     Self
 
     /**
-     * @param {Result<any>} a
-     * @param {Result<any>} b
+     * @param {String} target
+     * @param {String} value
      */
-    static mergeResults(a, b) {
-        if (!b) {
-            return a
+    static appendBeforeHighlight(target, value) {
+        if (target.endsWith(Parser.highlight)) {
+            target = target.replace(/(?=(?:\n|^).+$)/, value)
+        } else {
+            target += value
         }
-        return /** @type {typeof a} */({
-            status: a.status,
-            position: a.position,
-            value: a.value,
-        })
+        return target
     }
 
-    constructor() {
-        // @ts-expect-error
-        this.Self = this.constructor
-    }
-
-
-    unwrap() {
-        return /** @type {Parser<T>[]} */([])
+    /** @param {String} value */
+    static lastRowLength(value, firstRowPadding = 0) {
+        // This regex always matches and group 2 (content of the last row) is always there
+        const match = value.match(/(?:\n|(^))([^\n]*)$/)
+        // Group 1 tells wheter or not it matched the first row (last row is also first row)
+        const additional = match[1] !== undefined ? firstRowPadding : 0
+        return match[2].length + additional
     }
 
     /**
-     * @template {Parser<any>[]} P
-     * @param {P} parsers
-     * @returns {Parser<any>}
+     * @param {Context} context
+     * @param {PathNode} path
      */
-    wrap(...parsers) {
-        return null
+    isHighlighted(context, path) {
+        if (context.highlighted instanceof Parser) {
+            return context.highlighted === this
+        }
+        if (!context.highlighted || !path) {
+            return false
+        }
+        let a, prevA, b, prevB
+        loop:
+        for (
+            a = path,
+            b = /** @type {PathNode} */(context.highlighted);
+            a && b;
+            prevA = a, a = a.parent,
+            prevB = b, b = b.parent
+        ) {
+            if (a.parser !== b.parser || a.index !== b.index) {
+                if (!prevA || !prevB) {
+                    return false // Starting nodes did not match
+                }
+                // Try to speculatevely walk the path in reverse to find matching nodes
+                let nextA
+                let nextB
+                for (
+                    nextA = a, nextB = b;
+                    nextA || nextB;
+                    nextA = nextA?.parent, nextB = nextB?.parent
+                ) {
+                    const aMatches = nextA?.parser === prevA.parser
+                    const bMatches = nextB?.parser === prevB.parser
+                    if (aMatches || bMatches) {
+                        if (aMatches) {
+                            prevA = nextA
+                        }
+                        if (bMatches) {
+                            prevB = nextB
+                        }
+                        a = prevA
+                        b = prevB
+                        continue loop
+                    }
+                }
+                return false
+            }
+        }
+        return true
+    }
+
+    /** @param {PathNode?} path */
+    isVisited(path) {
+        if (!path) {
+            return false
+        }
+        for (path = path.parent; path != null; path = path.parent) {
+            if (path.parser === this) {
+                return true
+            }
+        }
+        return false
     }
 
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      * @returns {Result<T>}
      */
-    parse(context, position) {
+    parse(context, position, path) {
         return null
     }
 
-    toString(context = Reply.makeContext(null, ""), indent = 0) {
-        if (context.visited.has(this)) {
+    /** @param {PathNode} path */
+    toString(context = Reply.makeContext(null, ""), indent = 0, path = null) {
+        if (this.isVisited(path)) {
             return "<...>" // Recursive parser
         }
-        context.visited.set(this, null)
-        return this.doToString(context, indent)
+        const result = this.doToString(context, indent, path)
+        return result
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, path) {
         return `${this.constructor.name} does not implement toString()`
     }
 }
