@@ -7,8 +7,6 @@ import Reply from "../Reply.js"
  */
 export default class StringParser extends Parser {
 
-    static successParserInstance
-
     #value
     get value() {
         return this.#value

@@ -164,7 +164,7 @@ export default class Parsernostrum {
                 + `Input: ${segment}\n`
                 + "       " + " ".repeat(offset)
                 + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
-                + `Last valid parser matched:`
+                + (result.bestParser ? "Last valid parser matched:" : "No parser matched:")
                 + this.toString(1, true, result.bestParser)
                 + "\n"
             )

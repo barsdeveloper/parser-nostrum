@@ -38,8 +38,9 @@ export default class ChainedParser extends Parser {
         const result = this.#fn(outcome.value, context.input, outcome.position)
             .getParser()
             .parse(context, outcome.position)
-        if (!result) {
-            return outcome
+        if (outcome.bestPosition > result.bestPosition) {
+            result.bestParser = outcome.bestParser
+            result.bestPosition = outcome.bestPosition
         }
         return result
     }
