@@ -80,7 +80,7 @@ export default class MathGrammar {
             P.seq(
                 P.str("("),
                 P.whitespaceOpt,
-                P.lazy(() => MathGrammar.expressionFragment).map(v => ("lazy .expressionFragment", v)),
+                P.lazy(() => MathGrammar.expressionFragment),
                 P.whitespaceOpt,
                 P.str(")"),
             ).map(([_0, _1, entries]) => [this.#evaluate(entries)])
@@ -88,8 +88,8 @@ export default class MathGrammar {
 
     static expressionFragment = P.alt(
         P.seq(
-            MathGrammar.#termFragment.map(v => ("main termFragment", v)),
-            MathGrammar.#opFragment.map(v => ("main .opFragment", v)),
+            MathGrammar.#termFragment,
+            MathGrammar.#opFragment,
         ).map(([term, fragment]) => [...term, ...fragment]),
         MathGrammar.#number.map(v => [v]),
     )
