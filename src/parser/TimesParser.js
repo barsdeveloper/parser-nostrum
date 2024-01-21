@@ -33,29 +33,20 @@ export default class TimesParser extends Parser {
         this.#max = max
     }
 
-    unwrap() {
-        return [this.#parser]
-    }
-
-    /**
-     * @template {Parser<any>[]} P
-     * @param {P} parsers
-     */
-    wrap(...parsers) {
-        const result = /** @type {TimesParser<typeof parsers[0]>} */(new TimesParser(parsers[0], this.#min, this.#max))
-        return result
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      */
-    parse(context, position) {
-        context.path.push(this)
+    parse(context, position, path) {
         const value = /** @type {ParserValue<T>[]} */([])
-        const result = Reply.makeSuccess(position, value, [...context.path])
+        const result = Reply.makeSuccess(position, value, path)
         for (let i = 0; i < this.#max; ++i) {
-            const outcome = this.#parser.parse(context, result.position)
+            const outcome = this.#parser.parse(
+                context,
+                result.position,
+                { parent: path, parser: this.#parser, index: 0 }
+            )
             if (outcome.bestPosition > result.bestPosition) {
                 result.bestParser = outcome.bestParser
                 result.bestPosition = outcome.bestPosition
@@ -70,7 +61,6 @@ export default class TimesParser extends Parser {
             result.value.push(outcome.value)
             result.position = outcome.position
         }
-        context.path.pop()
         return result
     }
 
@@ -78,9 +68,10 @@ export default class TimesParser extends Parser {
      * @protected
      * @param {Context} context
      * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent) {
-        let result = this.parser.toString(context, indent)
+    doToString(context, indent, path) {
+        let result = this.parser.toString(context, indent, { parent: path, parser: this.parser, index: 0 })
         const serialized =
             this.#min === 0 && this.#max === 1 ? "?"
                 : this.#min === 0 && this.#max === Number.POSITIVE_INFINITY ? "*"
@@ -89,7 +80,7 @@ export default class TimesParser extends Parser {
                         + this.#min
                         + (this.#min !== this.#max ? "," + this.#max : "")
                         + "}"
-        if (this.isHighlighted(context)) {
+        if (this.isHighlighted(context, path)) {
             result +=
                 serialized
                 + "\n"

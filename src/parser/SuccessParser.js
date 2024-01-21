@@ -18,9 +18,13 @@ export default class SuccessParser extends StringParser {
      * @protected
      * @param {Context} context
      * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent) {
+    doToString(context, indent, path) {
         return "<SUCCESS>"
-            + (this.isHighlighted(context) ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}` : "")
+            + (this.isHighlighted(context, path)
+                ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}`
+                : ""
+            )
     }
 }

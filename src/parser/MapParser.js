@@ -27,30 +27,17 @@ export default class MapParser extends Parser {
         this.#mapper = mapper
     }
 
-    unwrap() {
-        return [this.#parser]
-    }
-
-    /**
-     * @template {Parser<any>[]} T
-     * @param {T} parsers
-     */
-    wrap(...parsers) {
-        return new MapParser(parsers[0], this.#mapper)
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      * @returns {Result<P>}
      */
-    parse(context, position) {
-        context.path.push(this)
-        const result = this.#parser.parse(context, position)
+    parse(context, position, path) {
+        const result = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
         if (result.status) {
             result.value = this.#mapper(result.value)
         }
-        context.path.pop()
         return result
     }
 
@@ -58,20 +45,18 @@ export default class MapParser extends Parser {
      * @protected
      * @param {Context} context
      * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent) {
+    doToString(context, indent, path) {
         let serializedMapper = this.#mapper.toString()
         if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
             serializedMapper = "(...) => { ... }"
         }
-        if (this.isHighlighted(context)) {
-            if (context.highlightedPath.length > 0) {
-                context.highlightedPath.push(this.#parser)
-            } else {
-                context.highlightedParser = this.#parser
-            }
+        const childrenPath = { parent: path, parser: this.#parser, index: 0 }
+        if (this.isHighlighted(context, path)) {
+            context.highlighted = context.highlighted instanceof Parser ? this.#parser : childrenPath
         }
-        let result = this.#parser.toString(context, indent)
+        let result = this.#parser.toString(context, indent, childrenPath)
         result = Parser.appendBeforeHighlight(result, ` -> map<${serializedMapper}>`)
         return result
     }

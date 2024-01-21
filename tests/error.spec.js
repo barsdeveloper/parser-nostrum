@@ -337,6 +337,7 @@ test("Test MathGrammar 1", async ({ page }) => {
         + '                    | "-" -> map<(...) => { ... }>\n'
         + '                > -> map<v => v>\n'
         + '                /\\s*/\n'
+        + '                ^^^^^ Last valid parser\n'
         + '                <...>\n'
         + '            > -> map<(...) => { ... }>+ -> map<values => values.flatMap(v => v)> -> map<v => ("main .opFragment", v)>\n'
         + '        > -> map<([term, fragment]) => [...term, ...fragment]>\n'

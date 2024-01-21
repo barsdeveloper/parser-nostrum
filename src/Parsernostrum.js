@@ -97,8 +97,6 @@ export default class Parsernostrum {
 
     /** @param {T} parser */
     constructor(parser, optimized = false) {
-        // @ts-expect-error
-        this.Self = this.constructor
         this.#parser = parser
     }
 
@@ -111,7 +109,7 @@ export default class Parsernostrum {
      * @returns {Result<ParserValue<T>>}
      */
     run(input) {
-        const result = this.#parser.parse(Reply.makeContext(this, input), 0)
+        const result = this.#parser.parse(Reply.makeContext(this, input), 0, Reply.makePathNode(this.#parser))
         if (result.position !== input.length) {
             result.status = false
         }
@@ -120,7 +118,7 @@ export default class Parsernostrum {
 
     /**
      * @param {String} input
-     * @throws when the parser fails to match
+     * @throws {Error} when the parser fails to match
      */
     parse(input) {
         const result = this.run(input)
@@ -242,12 +240,9 @@ export default class Parsernostrum {
         return new this(new LazyParser(parser))
     }
 
-    /**
-     * @param {Number} min
-     * @returns {Parsernostrum<TimesParser<T>>}
-     */
+    /** @param {Number} min */
     times(min, max = min) {
-        return new this.Self(new TimesParser(this.#parser, min, max))
+        return new Parsernostrum(new TimesParser(this.#parser, min, max))
     }
 
     many() {
@@ -267,7 +262,7 @@ export default class Parsernostrum {
     /** @returns {Parsernostrum<T?>} */
     opt() {
         // @ts-expect-error
-        return this.Self.alt(this, this.Self.success())
+        return Parsernostrum.alt(this, Parsernostrum.success())
     }
 
     /**
@@ -275,16 +270,16 @@ export default class Parsernostrum {
      * @param {P} separator
      */
     sepBy(separator, allowTrailing = false) {
-        const results = this.Self.seq(
+        const results = Parsernostrum.seq(
             this,
-            this.Self.seq(separator, this).map(Parsernostrum.#secondElementGetter).many()
+            Parsernostrum.seq(separator, this).map(Parsernostrum.#secondElementGetter).many()
         )
             .map(Parsernostrum.#arrayFlatter)
         return results
     }
 
     skipSpace() {
-        return this.Self.seq(this, this.Self.whitespaceOpt).map(Parsernostrum.#firstElementGetter)
+        return Parsernostrum.seq(this, Parsernostrum.whitespaceOpt).map(Parsernostrum.#firstElementGetter)
     }
 
     /**
@@ -294,7 +289,7 @@ export default class Parsernostrum {
      */
     map(fn) {
         // @ts-expect-error
-        return new this.Self(new MapParser(this.#parser, fn))
+        return new Parsernostrum(new MapParser(this.#parser, fn))
     }
 
     /**
@@ -302,7 +297,7 @@ export default class Parsernostrum {
      * @param {(v: ParserValue<T>, input: String, position: Number) => P} fn
      */
     chain(fn) {
-        return new this.Self(new ChainedParser(this.#parser, fn))
+        return new Parsernostrum(new ChainedParser(this.#parser, fn))
     }
 
     /**
@@ -312,8 +307,8 @@ export default class Parsernostrum {
     assert(fn) {
         // @ts-expect-error
         return this.chain((v, input, position) => fn(v, input, position)
-            ? this.Self.success().map(() => v)
-            : this.Self.failure()
+            ? Parsernostrum.success().map(() => v)
+            : Parsernostrum.failure()
         )
     }
 
@@ -321,18 +316,14 @@ export default class Parsernostrum {
         return this.map(Parsernostrum.#joiner)
     }
 
-    /** @param {Parsernostrum<Parser<any>> | Parser<any> | Parser<any>[]} highlight */
+    /** @param {Parsernostrum<Parser<any>> | Parser<any> | PathNode} highlight */
     toString(indent = 0, newline = false, highlight = null) {
         if (highlight instanceof Parsernostrum) {
             highlight = highlight.getParser()
         }
         const context = Reply.makeContext(this, "")
-        if (highlight instanceof Array) {
-            context.highlightedPath = highlight
-        } else {
-            context.highlightedParser = highlight
-        }
+        context.highlighted = highlight
         return (newline ? "\n" + Parser.indentation.repeat(indent) : "")
-            + this.#parser.toString(context, indent)
+            + this.#parser.toString(context, indent, Reply.makePathNode(this.#parser))
     }
 }

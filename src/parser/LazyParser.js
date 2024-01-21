@@ -24,46 +24,27 @@ export default class LazyParser extends Parser {
         return this.#resolvedPraser
     }
 
-    unwrap() {
-        return [this.resolve()]
-    }
-
-    /**
-     * @template {Parser<any>[]} P
-     * @param {P} parsers
-     */
-    wrap(...parsers) {
-        const parsernostrumConstructor = /** @type {ConstructorType<Parsernostrum<typeof parsers[0]>>} */(
-            this.#parser().constructor
-        )
-        return new LazyParser(() => new parsernostrumConstructor(parsers[0]))
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      */
-    parse(context, position) {
-        context.path.push(this)
+    parse(context, position, path) {
         this.resolve()
-        const result = this.#resolvedPraser.parse(context, position)
-        context.path.pop()
-        return result
+        return this.#resolvedPraser.parse(context, position, { parent: path, parser: this.#resolvedPraser, index: 0 })
     }
 
     /**
      * @protected
      * @param {Context} context
      * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent) {
-        if (this.isHighlighted(context)) {
-            if (context.highlightedPath.length > 0) {
-                context.highlightedPath.push(this.#resolvedPraser)
-            } else {
-                context.highlightedParser = this.#resolvedPraser
-            }
+    doToString(context, indent, path) {
+        const childrenPath = { parent: path, parser: this.#resolvedPraser, index: 0 }
+        if (this.isHighlighted(context, path)) {
+            context.highlighted = context.highlighted instanceof Parser ? this.#resolvedPraser : childrenPath
         }
-        return this.resolve().toString(context, indent)
+        return this.resolve().toString(context, indent, childrenPath)
     }
 }

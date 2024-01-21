@@ -1,12 +1,20 @@
 // @ts-nocheck
 
 /**
+ * @typedef {{
+ *     parent: PathNode?,
+*     parser: Parser<any>,
+*     index: Number,
+* }} PathNode
+*/
+
+/**
  * @template T
  * @typedef {{
  *     status: Boolean,
  *     value: T?,
  *     position: Number,
- *     bestParser: Parser<any>[],
+ *     bestParser: PathNode,
  *     bestPosition: Number,
  * }} Result
  */
@@ -15,9 +23,7 @@
  * @typedef {{
  *     parsernostrum: Parsernostrum,
  *     input: String,
- *     path: Parser<any>[],
- *     highlightedPath: Parser<any>[],
- *     highlightedParser: Parser<any>,
+ *     highlighted: Parser<any> | PathNode,
  * }} Context
  */
 

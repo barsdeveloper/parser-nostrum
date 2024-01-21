@@ -4,10 +4,10 @@ export default class Reply {
      * @template T
      * @param {Number} position
      * @param {T} value
-     * @param {Parser<any>[]} bestPath
+     * @param {PathNode} bestPath
      * @returns {Result<T>}
      */
-    static makeSuccess(position, value, bestPath = [], bestPosition = 0) {
+    static makeSuccess(position, value, bestPath = null, bestPosition = 0) {
         return {
             status: true,
             value: value,
@@ -18,14 +18,14 @@ export default class Reply {
     }
 
     /**
-     * @param {Parser<any>[]} bestPath
+     * @param {PathNode} bestPath
      * @returns {Result<null>}
      */
-    static makeFailure(position = 0, bestPath = [], bestPosition = 0) {
+    static makeFailure(position = 0, bestPath = null, bestPosition = 0) {
         return {
             status: false,
             value: null,
-            position: position,
+            position,
             bestParser: bestPath,
             bestPosition: bestPosition,
         }
@@ -34,11 +34,17 @@ export default class Reply {
     /** @param {Parsernostrum<Parser<any>>} parsernostrum */
     static makeContext(parsernostrum = null, input = "") {
         return /** @type {Context} */({
-            parsernostrum: parsernostrum,
-            input: input,
-            path: [],
-            highlightedPath: [],
-            highlightedParser: null,
+            parsernostrum,
+            input,
+            highlighted: null,
+        })
+    }
+
+    static makePathNode(parser, index = 0, previous = null) {
+        return /** @type {PathNode} */({
+            parent: previous,
+            parser,
+            index,
         })
     }
 }

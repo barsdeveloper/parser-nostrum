@@ -25,37 +25,22 @@ export default class ChainedParser extends Parser {
         this.#fn = chained
     }
 
-    unwrap() {
-        return [this.#parser]
-    }
-
-    /**
-     * @template {Parser<any>[]} T
-     * @param {T} parsers
-     */
-    wrap(...parsers) {
-        return new ChainedParser(parsers[0], this.#fn)
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      */
-    parse(context, position) {
-        context.path.push(this)
-        const outcome = this.#parser.parse(context, position)
+    parse(context, position, path) {
+        const outcome = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
         if (!outcome.status) {
-            context.path.pop()
             return outcome
         }
         const result = this.#fn(outcome.value, context.input, outcome.position)
             .getParser()
             .parse(context, outcome.position)
         if (!result) {
-            context.path.pop()
             return outcome
         }
-        context.path.pop()
         return result
     }
 
@@ -63,11 +48,12 @@ export default class ChainedParser extends Parser {
      * @protected
      * @param {Context} context
      * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent) {
+    doToString(context, indent, path) {
         const serialized = "chained<f()>"
-        let result = this.#parser.toString(context, indent)
-        if (this.isHighlighted(context)) {
+        let result = this.#parser.toString(context, indent, { parent: path, parser: this.#parser, index: 0 })
+        if (this.isHighlighted(context, path)) {
             result +=
                 " => "
                 + serialized

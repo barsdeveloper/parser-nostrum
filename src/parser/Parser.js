@@ -31,35 +31,50 @@ export default class Parser {
         return match[2].length + additional
     }
 
-    constructor() {
-        // @ts-expect-error
-        this.Self = this.constructor
-    }
-
-    /** @param {Context} context */
-    isHighlighted(context) {
-        if (context.highlightedPath.length === 0) {
-            return context.highlightedParser === this
+    /**
+     * @param {Context} context
+     * @param {PathNode} path
+     */
+    isHighlighted(context, path) {
+        if (context.highlighted instanceof Parser) {
+            return context.highlighted === this
         }
-        let i
-        let j
+        if (!context.highlighted || !path) {
+            return false
+        }
+        let a, prevA, b, prevB
         loop:
         for (
-            i = context.path.length - 1,
-            j = context.highlightedPath.length - 1;
-            i >= 0 && j >= 0;
-            --i,
-            --j
+            a = path,
+            b = /** @type {PathNode} */(context.highlighted);
+            a && b;
+            prevA = a, a = a.parent,
+            prevB = b, b = b.parent
         ) {
-            if (context.path[i] !== context.highlightedPath[j]) {
-                if (j > i) {
-                    const initial = context.highlightedPath[++j]
-                    while (--j >= 0) {
-                        if (context.highlightedPath[j] === initial) {
-                            // Retry with the same i
-                            ++i
-                            continue loop
+            if (a.parser !== b.parser || a.index !== b.index) {
+                if (!prevA || !prevB) {
+                    return false // Starting nodes did not match
+                }
+                // Try to speculatevely walk the path in reverse to find matching nodes
+                let nextA
+                let nextB
+                for (
+                    nextA = a, nextB = b;
+                    nextA || nextB;
+                    nextA = nextA?.parent, nextB = nextB?.parent
+                ) {
+                    const aMatches = nextA?.parser === prevA.parser
+                    const bMatches = nextB?.parser === prevB.parser
+                    if (aMatches || bMatches) {
+                        if (aMatches) {
+                            prevA = nextA
                         }
+                        if (bMatches) {
+                            prevB = nextB
+                        }
+                        a = prevA
+                        b = prevB
+                        continue loop
                     }
                 }
                 return false
@@ -68,40 +83,35 @@ export default class Parser {
         return true
     }
 
-    /** @param {Context} context */
-    isVisited(context) {
-        return context.path.includes(this)
-    }
-
-    unwrap() {
-        return /** @type {Parser<T>[]} */([])
-    }
-
-    /**
-     * @template {Parser<any>[]} P
-     * @param {P} parsers
-     * @returns {Parser<any>}
-     */
-    wrap(...parsers) {
-        return null
+    /** @param {PathNode?} path */
+    isVisited(path) {
+        if (!path) {
+            return false
+        }
+        for (path = path.parent; path != null; path = path.parent) {
+            if (path.parser === this) {
+                return true
+            }
+        }
+        return false
     }
 
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      * @returns {Result<T>}
      */
-    parse(context, position) {
+    parse(context, position, path) {
         return null
     }
 
-    toString(context = Reply.makeContext(null, ""), indent = 0) {
-        if (this.isVisited(context)) {
+    /** @param {PathNode} path */
+    toString(context = Reply.makeContext(null, ""), indent = 0, path = null) {
+        if (this.isVisited(path)) {
             return "<...>" // Recursive parser
         }
-        context.path.push(this)
-        const result = this.doToString(context, indent)
-        context.path.pop()
+        const result = this.doToString(context, indent, path)
         return result
     }
 
@@ -109,8 +119,9 @@ export default class Parser {
      * @protected
      * @param {Context} context
      * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent) {
+    doToString(context, indent, path) {
         return `${this.constructor.name} does not implement toString()`
     }
 }
