@@ -27,25 +27,14 @@ export default class MapParser extends Parser {
         this.#mapper = mapper
     }
 
-    unwrap() {
-        return [this.#parser]
-    }
-
-    /**
-     * @template {Parser<any>[]} T
-     * @param {T} parsers
-     */
-    wrap(...parsers) {
-        return new MapParser(parsers[0], this.#mapper)
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      * @returns {Result<P>}
      */
-    parse(context, position) {
-        const result = this.#parser.parse(context, position)
+    parse(context, position, path) {
+        const result = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
         if (result.status) {
             result.value = this.#mapper(result.value)
         }
@@ -55,12 +44,20 @@ export default class MapParser extends Parser {
     /**
      * @protected
      * @param {Context} context
+     * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent = 0) {
+    doToString(context, indent, path) {
         let serializedMapper = this.#mapper.toString()
         if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
             serializedMapper = "(...) => { ... }"
         }
-        return this.#parser.toString(context, indent) + ` -> map<${serializedMapper}>`
+        const childrenPath = { parent: path, parser: this.#parser, index: 0 }
+        if (this.isHighlighted(context, path)) {
+            context.highlighted = context.highlighted instanceof Parser ? this.#parser : childrenPath
+        }
+        let result = this.#parser.toString(context, indent, childrenPath)
+        result = Parser.appendBeforeHighlight(result, ` -> map<${serializedMapper}>`)
+        return result
     }
 }

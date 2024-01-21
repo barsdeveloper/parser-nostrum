@@ -1,13 +1,35 @@
 // @ts-nocheck
 
 /**
- * @template Value
- * @typedef {import("./Reply.js").Result<Value>} Result
+ * @typedef {{
+ *     parent: PathNode?,
+*     parser: Parser<any>,
+*     index: Number,
+* }} PathNode
+*/
+
+/**
+ * @template T
+ * @typedef {{
+ *     status: Boolean,
+ *     value: T?,
+ *     position: Number,
+ *     bestParser: PathNode,
+ *     bestPosition: Number,
+ * }} Result
  */
 
 /**
- * @template V
- * @typedef {import("./parser/Parser.js").default<V>} Parser
+ * @typedef {{
+ *     parsernostrum: Parsernostrum,
+ *     input: String,
+ *     highlighted: Parser<any> | PathNode,
+ * }} Context
+ */
+
+/**
+ * @template T
+ * @typedef {import("./parser/Parser.js").default<T>} Parser
  */
 
 /**
@@ -31,27 +53,6 @@
  *     : any
  * } UnionFromArray
  **/
-
-/**
- * @template T
- * @typedef {T extends [infer A] ? [ConstructorType<A>]
- *     : T extends [infer A, ...infer B] ? [ConstructorType<A>, ...ConstructorsFromArrayTypes<B>]
- *     : T extends [] ? []
- *     : any
- * } ConstructorsFromArrayTypes
- **/
-
-/**
- *
- */
-
-/**
- * @typedef {{
- *     parsernostrum: Parsernostrum,
- *     input: String,
- *     visited: Map<Parser<any>, any>,
- * }} Context
- */
 
 /**
  * @template T

@@ -20,16 +20,24 @@ export default class Parsernostrum {
     /** @type {(new (parser: Parser<any>) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
     Self
 
+    static lineColumnFromOffset(string, offset) {
+        const lines = string.substring(0, offset).split('\n')
+        const line = lines.length
+        const column = lines[lines.length - 1].length + 1
+        return { line, column }
+    }
     /** @param {[any, ...any]|RegExpExecArray} param0 */
     static #firstElementGetter = ([v, _]) => v
     /** @param {[any, any, ...any]|RegExpExecArray} param0 */
     static #secondElementGetter = ([_, v]) => v
     static #arrayFlatter = ([first, rest]) => [first, ...rest]
-    /** @param {any} v */
-    static #joiner = v =>
-        v instanceof Array
-            ? v.join("")
-            : v
+    /**
+     * @template T
+     * @param {T} v
+     * @returns {T extends Array ? String : T}
+     */
+    // @ts-expect-error
+    static #joiner = v => v instanceof Array ? v.join("") : v
     static #createEscapeable = character => String.raw`[^${character}\\]*(?:\\.[^${character}\\]*)*`
     static #numberRegex = /[-\+]?(?:\d*\.)?\d+/
 
@@ -89,8 +97,6 @@ export default class Parsernostrum {
 
     /** @param {T} parser */
     constructor(parser, optimized = false) {
-        // @ts-expect-error
-        this.Self = this.constructor
         this.#parser = parser
     }
 
@@ -103,18 +109,65 @@ export default class Parsernostrum {
      * @returns {Result<ParserValue<T>>}
      */
     run(input) {
-        const result = this.#parser.parse(Reply.makeContext(this, input), 0)
-        return result.status && result.position === input.length ? result : Reply.makeFailure(result.position)
+        const result = this.#parser.parse(Reply.makeContext(this, input), 0, Reply.makePathNode(this.#parser))
+        if (result.position !== input.length) {
+            result.status = false
+        }
+        return result
     }
 
     /**
      * @param {String} input
-     * @throws when the parser fails to match
+     * @throws {Error} when the parser fails to match
      */
     parse(input) {
         const result = this.run(input)
         if (!result.status) {
-            throw new Error(`Could not parse "${input.length > 20 ? input.substring(0, 17) + "..." : input}"`)
+            const chunkLength = 60
+            const chunkRange = /** @type {[Number, Number]} */(
+                [Math.ceil(chunkLength / 2), Math.floor(chunkLength / 2)]
+            )
+            const position = Parsernostrum.lineColumnFromOffset(input, result.bestPosition)
+            let bestPosition = result.bestPosition
+            const inlineInput = input.replaceAll(
+                /^(\s)+|\s{6,}|\s*?\n\s*/g,
+                (m, startingSpace, offset) => {
+                    let replaced = startingSpace ? "..." : " ... "
+                    if (offset <= result.bestPosition) {
+                        if (result.bestPosition < offset + m.length) {
+                            bestPosition -= result.bestPosition - offset
+                        } else {
+                            bestPosition -= m.length - replaced.length
+                        }
+                    }
+                    return replaced
+                }
+            )
+            const string = inlineInput.substring(0, chunkLength).trimEnd()
+            const leadingWhitespaceLength = Math.min(
+                input.substring(result.bestPosition - chunkRange[0]).match(/^\s*/)[0].length,
+                chunkRange[0] - 1,
+            )
+            let offset = Math.min(bestPosition, chunkRange[0] - leadingWhitespaceLength)
+            chunkRange[0] = Math.max(0, bestPosition - chunkRange[0]) + leadingWhitespaceLength
+            chunkRange[1] = Math.min(input.length, chunkRange[0] + chunkLength)
+            let segment = inlineInput.substring(...chunkRange)
+            if (chunkRange[0] > 0) {
+                segment = "..." + segment
+                offset += 3
+            }
+            if (chunkRange[1] < inlineInput.length - 1) {
+                segment = segment + "..."
+            }
+            throw new Error(
+                `Could not parse: ${string}\n\n`
+                + `Input: ${segment}\n`
+                + "       " + " ".repeat(offset)
+                + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
+                + (result.bestParser ? "Last valid parser matched:" : "No parser matched:")
+                + this.toString(1, true, result.bestParser)
+                + "\n"
+            )
         }
         return result.value
     }
@@ -187,13 +240,9 @@ export default class Parsernostrum {
         return new this(new LazyParser(parser))
     }
 
-    /**
-     * @param {Number} min
-     * @returns {Parsernostrum<TimesParser<T>>}
-     */
+    /** @param {Number} min */
     times(min, max = min) {
-        // @ts-expect-error
-        return new this.Self(new TimesParser(this.#parser, min, max))
+        return new Parsernostrum(new TimesParser(this.#parser, min, max))
     }
 
     many() {
@@ -213,7 +262,7 @@ export default class Parsernostrum {
     /** @returns {Parsernostrum<T?>} */
     opt() {
         // @ts-expect-error
-        return this.Self.alt(this, this.Self.success())
+        return Parsernostrum.alt(this, Parsernostrum.success())
     }
 
     /**
@@ -221,16 +270,16 @@ export default class Parsernostrum {
      * @param {P} separator
      */
     sepBy(separator, allowTrailing = false) {
-        const results = this.Self.seq(
+        const results = Parsernostrum.seq(
             this,
-            this.Self.seq(separator, this).map(Parsernostrum.#secondElementGetter).many()
+            Parsernostrum.seq(separator, this).map(Parsernostrum.#secondElementGetter).many()
         )
             .map(Parsernostrum.#arrayFlatter)
         return results
     }
 
     skipSpace() {
-        return this.Self.seq(this, this.Self.whitespaceOpt).map(Parsernostrum.#firstElementGetter)
+        return Parsernostrum.seq(this, Parsernostrum.whitespaceOpt).map(Parsernostrum.#firstElementGetter)
     }
 
     /**
@@ -240,7 +289,7 @@ export default class Parsernostrum {
      */
     map(fn) {
         // @ts-expect-error
-        return new this.Self(new MapParser(this.#parser, fn))
+        return new Parsernostrum(new MapParser(this.#parser, fn))
     }
 
     /**
@@ -248,7 +297,7 @@ export default class Parsernostrum {
      * @param {(v: ParserValue<T>, input: String, position: Number) => P} fn
      */
     chain(fn) {
-        return new this.Self(new ChainedParser(this.#parser, fn))
+        return new Parsernostrum(new ChainedParser(this.#parser, fn))
     }
 
     /**
@@ -256,18 +305,25 @@ export default class Parsernostrum {
      * @return {Parsernostrum<T>}
      */
     assert(fn) {
-        return /** @type {Parsernostrum<T>} */(this.chain((v, input, position) => fn(v, input, position)
-            ? this.Self.success().map(() => v)
-            : this.Self.failure()
-        ))
+        // @ts-expect-error
+        return this.chain((v, input, position) => fn(v, input, position)
+            ? Parsernostrum.success().map(() => v)
+            : Parsernostrum.failure()
+        )
     }
 
     join(value = "") {
         return this.map(Parsernostrum.#joiner)
     }
 
-    toString(indent = 0, newline = false) {
+    /** @param {Parsernostrum<Parser<any>> | Parser<any> | PathNode} highlight */
+    toString(indent = 0, newline = false, highlight = null) {
+        if (highlight instanceof Parsernostrum) {
+            highlight = highlight.getParser()
+        }
+        const context = Reply.makeContext(this, "")
+        context.highlighted = highlight
         return (newline ? "\n" + Parser.indentation.repeat(indent) : "")
-            + this.#parser.toString(Reply.makeContext(this, ""), indent)
+            + this.#parser.toString(context, indent, Reply.makePathNode(this.#parser))
     }
 }

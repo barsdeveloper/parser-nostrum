@@ -35,41 +35,41 @@ export default class Lookahead extends Parser {
         this.#type = type
     }
 
-    unwrap() {
-        return [this.#parser]
-    }
-
-    /**
-     * @template {Parser<any>[]} P
-     * @param {P} parsers
-     */
-    wrap(...parsers) {
-        return new Lookahead(parsers[0], this.#type)
-    }
-
     /**
      * @param {Context} context
      * @param {Number} position
+     * @param {PathNode} path
      */
-    parse(context, position) {
-        if (
-            this.#type === Lookahead.Type.NEGATIVE_BEHIND
-            || this.#type === Lookahead.Type.POSITIVE_BEHIND
-        ) {
-            throw new Error("Lookbehind is not implemented yet")
-        } else {
-            const result = this.#parser.parse(context, position)
-            return result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
-                ? Reply.makeSuccess(position, "")
-                : Reply.makeFailure(position)
-        }
+    parse(context, position, path) {
+        let result = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
+        result = result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
+            ? Reply.makeSuccess(position, "", path, position)
+            : Reply.makeFailure()
+        return result
     }
 
     /**
      * @protected
      * @param {Context} context
+     * @param {Number} indent
+     * @param {PathNode} path
      */
-    doToString(context, indent = 0) {
-        return "(" + this.#type + this.#parser.toString(context, indent) + ")"
+    doToString(context, indent, path) {
+        let result = "("
+            + this.#type
+            + this.#parser.toString(context, indent, { parent: path, parser: this.#parser, index: 0 })
+            + ")"
+        if (this.isHighlighted(context, path)) {
+            result = result.replace(
+                /(\n)|$/,
+                "\n"
+                + Parser.indentation.repeat(indent)
+                + "^".repeat(this.#type.length + 1)
+                + " "
+                + Parser.highlight
+                + "$1"
+            )
+        }
+        return result
     }
 }
