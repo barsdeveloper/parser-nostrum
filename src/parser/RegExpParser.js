@@ -2,8 +2,8 @@ import Parser from "./Parser.js"
 import Reply from "../Reply.js"
 
 /**
- * @template {Number} Group
- * @extends {Parser<Group extends -1 ? RegExpExecArray : String>}
+ * @template T
+ * @extends {Parser<T>}
  */
 export default class RegExpParser extends Parser {
 
@@ -14,23 +14,37 @@ export default class RegExpParser extends Parser {
     }
     /** @type {RegExp} */
     #anchoredRegexp
-    #group
+    #matchMapper
+
+    static #createEscapeable = character => String.raw`[^${character}\\]*(?:\\.[^${character}\\]*)*`
+    static #numberRegex = /[-\+]?(?:\d*\.)?\d+/
+    static commonParser = {
+        number: new RegExp(this.#numberRegex.source + String.raw`(?!\.)`),
+        numberInteger: /[\-\+]?\d+(?!\.\d)/,
+        numberNatural: /\d+/,
+        numberExponential: new RegExp(this.#numberRegex.source + String.raw`(?:[eE][\+\-]?\d+)?(?!\.)`),
+        numberUnit: /\+?(?:0(?:\.\d+)?|1(?:\.0+)?)(?![\.\d])/,
+        numberByte: /0*(?:25[0-5]|2[0-4]\d|1?\d?\d)(?!\d|\.)/,
+        whitespace: /\s+/,
+        whitespaceOpt: /\s*/,
+        whitespaceInline: /[^\S\n]+/,
+        whitespaceInlineOpt: /[^\S\n]*/,
+        whitespaceMultiline: /\s*?\n\s*/,
+        doubleQuotedString: new RegExp(`"(${this.#createEscapeable('"')})"`),
+        singleQuotedString: new RegExp(`'(${this.#createEscapeable("'")})'`),
+        backtickQuotedString: new RegExp("`(" + this.#createEscapeable("`") + ")`"),
+    }
 
 
     /**
-     * @param {RegExp | RegExpParser} regexp
-     * @param {Group} group
+     * @param {RegExp} regexp
+     * @param {(match: RegExpExecArray) => T} matchMapper
      */
-    constructor(regexp, group) {
+    constructor(regexp, matchMapper) {
         super()
-        if (regexp instanceof RegExp) {
-            this.#regexp = regexp
-            this.#anchoredRegexp = new RegExp(`^(?:${regexp.source})`, regexp.flags)
-        } else if (regexp instanceof RegExpParser) {
-            this.#regexp = regexp.#regexp
-            this.#anchoredRegexp = regexp.#anchoredRegexp
-        }
-        this.#group = group
+        this.#regexp = regexp
+        this.#anchoredRegexp = new RegExp(`^(?:${regexp.source})`, regexp.flags)
+        this.#matchMapper = matchMapper
     }
 
     /**
@@ -38,14 +52,13 @@ export default class RegExpParser extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      */
-    // @ts-expect-error
     parse(context, position, path) {
         const match = this.#anchoredRegexp.exec(context.input.substring(position))
         if (match) {
             position += match[0].length
         }
         const result = match
-            ? Reply.makeSuccess(position, this.#group >= 0 ? match[this.#group] : match, path, position)
+            ? Reply.makeSuccess(position, this.#matchMapper(match), path, position)
             : Reply.makeFailure()
         return result
     }
@@ -58,6 +71,12 @@ export default class RegExpParser extends Parser {
      */
     doToString(context, indent, path) {
         let result = "/" + this.#regexp.source + "/"
+        const shortname = Object
+            .entries(RegExpParser.commonParser)
+            .find(([k, v]) => v.source === this.#regexp.source)?.[0]
+        if (shortname) {
+            result = "P." + shortname
+        }
         if (this.isHighlighted(context, path)) {
             result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight
         }

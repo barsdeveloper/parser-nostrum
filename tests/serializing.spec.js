@@ -280,3 +280,21 @@ test("Test 2", async ({ page }) => {
         >`
     )
 })
+
+test("Test predefined parsers", async ({ page }) => {
+    expect(P.number.toString()).toEqual("P.number")
+    expect(P.numberInteger.toString()).toEqual("P.numberInteger")
+    expect(P.numberBigInteger.toString()).toEqual("P.numberBigInteger")
+    expect(P.numberNatural.toString()).toEqual("P.numberNatural")
+    expect(P.numberExponential.toString()).toEqual("P.numberExponential")
+    expect(P.numberUnit.toString()).toEqual("P.numberUnit")
+    expect(P.numberByte.toString()).toEqual("P.numberByte")
+    expect(P.whitespace.toString()).toEqual("P.whitespace")
+    expect(P.whitespaceOpt.toString()).toEqual("P.whitespaceOpt")
+    expect(P.whitespaceInline.toString()).toEqual("P.whitespaceInline")
+    expect(P.whitespaceInlineOpt.toString()).toEqual("P.whitespaceInlineOpt")
+    expect(P.whitespaceMultiline.toString()).toEqual("P.whitespaceMultiline")
+    expect(P.doubleQuotedString.toString()).toEqual("P.doubleQuotedString")
+    expect(P.singleQuotedString.toString()).toEqual("P.singleQuotedString")
+    expect(P.backtickQuotedString.toString()).toEqual("P.backtickQuotedString")
+})

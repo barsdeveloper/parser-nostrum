@@ -181,8 +181,6 @@ class Parser {
  */
 class StringParser extends Parser {
 
-    static successParserInstance
-
     #value
     get value() {
         return this.#value
@@ -226,17 +224,18 @@ class StringParser extends Parser {
     }
 }
 
-/** @extends StringParser<""> */
-class SuccessParser extends StringParser {
+/** @extends Parser<String> */
+class SuccessParser extends Parser {
 
     static instance = new SuccessParser()
 
-    static {
-        StringParser.successParserInstance = this.instance;
-    }
-
-    constructor() {
-        super("");
+    /**
+     * @param {Context} context
+     * @param {Number} position
+     * @param {PathNode} path
+     */
+    parse(context, position, path) {
+        return Reply.makeSuccess(position, "", path, 0)
     }
 
     /**
@@ -377,8 +376,9 @@ class ChainedParser extends Parser {
         const result = this.#fn(outcome.value, context.input, outcome.position)
             .getParser()
             .parse(context, outcome.position);
-        if (!result) {
-            return outcome
+        if (outcome.bestPosition > result.bestPosition) {
+            result.bestParser = outcome.bestParser;
+            result.bestPosition = outcome.bestPosition;
         }
         return result
     }
@@ -563,6 +563,89 @@ class Lookahead extends Parser {
 }
 
 /**
+ * @template T
+ * @extends {Parser<T>}
+ */
+class RegExpParser extends Parser {
+
+    /** @type {RegExp} */
+    #regexp
+    get regexp() {
+        return this.#regexp
+    }
+    /** @type {RegExp} */
+    #anchoredRegexp
+    #matchMapper
+
+    static #createEscapeable = character => String.raw`[^${character}\\]*(?:\\.[^${character}\\]*)*`
+    static #numberRegex = /[-\+]?(?:\d*\.)?\d+/
+    static commonParser = {
+        number: new RegExp(this.#numberRegex.source + String.raw`(?!\.)`),
+        numberInteger: /[\-\+]?\d+(?!\.\d)/,
+        numberNatural: /\d+/,
+        numberExponential: new RegExp(this.#numberRegex.source + String.raw`(?:[eE][\+\-]?\d+)?(?!\.)`),
+        numberUnit: /\+?(?:0(?:\.\d+)?|1(?:\.0+)?)(?![\.\d])/,
+        numberByte: /0*(?:25[0-5]|2[0-4]\d|1?\d?\d)(?!\d|\.)/,
+        whitespace: /\s+/,
+        whitespaceOpt: /\s*/,
+        whitespaceInline: /[^\S\n]+/,
+        whitespaceInlineOpt: /[^\S\n]*/,
+        whitespaceMultiline: /\s*?\n\s*/,
+        doubleQuotedString: new RegExp(`"(${this.#createEscapeable('"')})"`),
+        singleQuotedString: new RegExp(`'(${this.#createEscapeable("'")})'`),
+        backtickQuotedString: new RegExp("`(" + this.#createEscapeable("`") + ")`"),
+    }
+
+
+    /**
+     * @param {RegExp} regexp
+     * @param {(match: RegExpExecArray) => T} matchMapper
+     */
+    constructor(regexp, matchMapper) {
+        super();
+        this.#regexp = regexp;
+        this.#anchoredRegexp = new RegExp(`^(?:${regexp.source})`, regexp.flags);
+        this.#matchMapper = matchMapper;
+    }
+
+    /**
+     * @param {Context} context
+     * @param {Number} position
+     * @param {PathNode} path
+     */
+    parse(context, position, path) {
+        const match = this.#anchoredRegexp.exec(context.input.substring(position));
+        if (match) {
+            position += match[0].length;
+        }
+        const result = match
+            ? Reply.makeSuccess(position, this.#matchMapper(match), path, position)
+            : Reply.makeFailure();
+        return result
+    }
+
+    /**
+     * @protected
+     * @param {Context} context
+     * @param {Number} indent
+     * @param {PathNode} path
+     */
+    doToString(context, indent, path) {
+        let result = "/" + this.#regexp.source + "/";
+        const shortname = Object
+            .entries(RegExpParser.commonParser)
+            .find(([k, v]) => v.source === this.#regexp.source)?.[0];
+        if (shortname) {
+            result = "P." + shortname;
+        }
+        if (this.isHighlighted(context, path)) {
+            result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight;
+        }
+        return result
+    }
+}
+
+/**
  * @template {Parser<any>} T
  * @template P
  * @extends Parser<P>
@@ -610,81 +693,51 @@ class MapParser extends Parser {
      * @param {PathNode} path
      */
     doToString(context, indent, path) {
-        let serializedMapper = this.#mapper.toString();
-        if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
-            serializedMapper = "(...) => { ... }";
-        }
         const childrenPath = { parent: path, parser: this.#parser, index: 0 };
         if (this.isHighlighted(context, path)) {
             context.highlighted = context.highlighted instanceof Parser ? this.#parser : childrenPath;
         }
         let result = this.#parser.toString(context, indent, childrenPath);
-        result = Parser.appendBeforeHighlight(result, ` -> map<${serializedMapper}>`);
+        if (this.#parser instanceof RegExpParser) {
+            if (Object.values(RegExpParser.commonParser).includes(this.#parser.regexp)) {
+                if (this.#parser.regexp === RegExpParser.commonParser.numberInteger && this.#mapper === BigInt) {
+                    return "P.numberBigInteger"
+                }
+                return result
+            }
+        }
+        let serializedMapper = this.#mapper.toString();
+        if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
+            serializedMapper = "(...) => { ... }";
+        }
+        serializedMapper = ` -> map<${serializedMapper}>`;
+        result = Parser.appendBeforeHighlight(result, serializedMapper);
         return result
     }
 }
 
-/**
- * @template {Number} Group
- * @extends {Parser<Group extends -1 ? RegExpExecArray : String>}
- */
-class RegExpParser extends Parser {
+/** @extends {RegExpParser<RegExpExecArray>} */
+class RegExpArrayParser extends RegExpParser {
 
-    /** @type {RegExp} */
-    #regexp
-    get regexp() {
-        return this.#regexp
+    /** @param {RegExpExecArray} match */
+    static #mapper = match => match
+
+    /** @param {RegExp} regexp */
+    constructor(regexp) {
+        super(regexp, RegExpArrayParser.#mapper);
     }
-    /** @type {RegExp} */
-    #anchoredRegexp
-    #group
+}
 
+/** @extends {RegExpParser<String>} */
+class RegExpValueParser extends RegExpParser {
 
-    /**
-     * @param {RegExp | RegExpParser} regexp
-     * @param {Group} group
-     */
-    constructor(regexp, group) {
-        super();
-        if (regexp instanceof RegExp) {
-            this.#regexp = regexp;
-            this.#anchoredRegexp = new RegExp(`^(?:${regexp.source})`, regexp.flags);
-        } else if (regexp instanceof RegExpParser) {
-            this.#regexp = regexp.#regexp;
-            this.#anchoredRegexp = regexp.#anchoredRegexp;
-        }
-        this.#group = group;
-    }
-
-    /**
-     * @param {Context} context
-     * @param {Number} position
-     * @param {PathNode} path
-     */
-    // @ts-expect-error
-    parse(context, position, path) {
-        const match = this.#anchoredRegexp.exec(context.input.substring(position));
-        if (match) {
-            position += match[0].length;
-        }
-        const result = match
-            ? Reply.makeSuccess(position, this.#group >= 0 ? match[this.#group] : match, path, position)
-            : Reply.makeFailure();
-        return result
-    }
-
-    /**
-     * @protected
-     * @param {Context} context
-     * @param {Number} indent
-     * @param {PathNode} path
-     */
-    doToString(context, indent, path) {
-        let result = "/" + this.#regexp.source + "/";
-        if (this.isHighlighted(context, path)) {
-            result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight;
-        }
-        return result
+    /** @param {RegExp} regexp */
+    constructor(regexp, group = 0) {
+        super(
+            regexp,
+            /** @param {RegExpExecArray} match */
+            match => match[group]
+        );
     }
 }
 
@@ -874,61 +927,53 @@ class Parsernostrum {
     // @ts-expect-error
     static #joiner = v => v instanceof Array ? v.join("") : v
     static #createEscapeable = character => String.raw`[^${character}\\]*(?:\\.[^${character}\\]*)*`
-    static #numberRegex = /[-\+]?(?:\d*\.)?\d+/
 
     // Prefedined parsers
 
     /** Parser accepting any valid decimal, possibly signed number */
-    static number = this.reg(new RegExp(this.#numberRegex.source + String.raw`(?!\.)`))
-        .map(Number)
+    static number = this.reg(RegExpParser.commonParser.number).map(Number)
 
     /** Parser accepting any digits only number */
-    static numberInteger = this.reg(/[\-\+]?\d+(?!\.\d)/).map(Number)
+    static numberInteger = this.reg(RegExpParser.commonParser.numberInteger).map(Number)
 
     /** Parser accepting any digits only number and returns a BigInt */
     static numberBigInteger = this.reg(this.numberInteger.getParser().parser.regexp).map(BigInt)
 
     /** Parser accepting any digits only number */
-    static numberNatural = this.reg(/\d+/).map(Number)
+    static numberNatural = this.reg(RegExpParser.commonParser.numberNatural).map(Number)
 
     /** Parser accepting any valid decimal, possibly signed, possibly in the exponential form number */
-    static numberExponential = this.reg(new RegExp(this.#numberRegex.source + String.raw`(?:[eE][\+\-]?\d+)?(?!\.)`))
-        .map(Number)
+    static numberExponential = this.reg(RegExpParser.commonParser.numberExponential).map(Number)
 
     /** Parser accepting any valid decimal number between 0 and 1 */
-    static numberUnit = this.reg(/\+?(?:0(?:\.\d+)?|1(?:\.0+)?)(?![\.\d])/)
-        .map(Number)
+    static numberUnit = this.reg(RegExpParser.commonParser.numberUnit).map(Number)
 
     /** Parser accepting any integer between 0 and 255 */
-    static numberByte = this.reg(/0*(?:25[0-5]|2[0-4]\d|1?\d?\d)(?!\d|\.)/)
-        .map(Number)
+    static numberByte = this.reg(RegExpParser.commonParser.numberByte).map(Number)
 
     /** Parser accepting whitespace */
-    static whitespace = this.reg(/\s+/)
+    static whitespace = this.reg(RegExpParser.commonParser.whitespace)
 
     /** Parser accepting whitespace */
-    static whitespaceOpt = this.reg(/\s*/)
+    static whitespaceOpt = this.reg(RegExpParser.commonParser.whitespaceOpt)
 
     /** Parser accepting whitespace that spans on a single line */
-    static whitespaceInline = this.reg(/[^\S\n]+/)
+    static whitespaceInline = this.reg(RegExpParser.commonParser.whitespaceInline)
 
     /** Parser accepting whitespace that spans on a single line */
-    static whitespaceInlineOpt = this.reg(/[^\S\n]+/)
+    static whitespaceInlineOpt = this.reg(RegExpParser.commonParser.whitespaceInlineOpt)
 
     /** Parser accepting whitespace that contains a list a newline */
-    static whitespaceMultiline = this.reg(/\s*?\n\s*/)
+    static whitespaceMultiline = this.reg(RegExpParser.commonParser.whitespaceMultiline)
 
     /** Parser accepting a double quoted string and returns the content */
-    static doubleQuotedString = this.regArray(new RegExp(`"(${this.#createEscapeable('"')})"`))
-        .map(this.#secondElementGetter)
+    static doubleQuotedString = this.reg(RegExpParser.commonParser.doubleQuotedString, 1)
 
     /** Parser accepting a single quoted string and returns the content */
-    static singleQuotedString = this.regArray(new RegExp(`'(${this.#createEscapeable("'")})'`))
-        .map(this.#secondElementGetter)
+    static singleQuotedString = this.reg(RegExpParser.commonParser.singleQuotedString, 1)
 
     /** Parser accepting a backtick quoted string and returns the content */
-    static backtickQuotedString = this.regArray(new RegExp(`\`(${this.#createEscapeable("`")})\``))
-        .map(this.#secondElementGetter)
+    static backtickQuotedString = this.reg(RegExpParser.commonParser.backtickQuotedString, 1)
 
     /** @param {T} parser */
     constructor(parser, optimized = false) {
@@ -999,7 +1044,7 @@ class Parsernostrum {
                 + `Input: ${segment}\n`
                 + "       " + " ".repeat(offset)
                 + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
-                + `Last valid parser matched:`
+                + (result.bestParser ? "Last valid parser matched:" : "No parser matched:")
                 + this.toString(1, true, result.bestParser)
                 + "\n"
             )
@@ -1019,12 +1064,12 @@ class Parsernostrum {
 
     /** @param {RegExp} value */
     static reg(value, group = 0) {
-        return new this(new RegExpParser(value, group))
+        return new this(new RegExpValueParser(value, group))
     }
 
     /** @param {RegExp} value */
     static regArray(value) {
-        return new this(new RegExpParser(value, -1))
+        return new this(new RegExpArrayParser(value))
     }
 
     static success() {

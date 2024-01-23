@@ -1,4 +1,5 @@
 import Parser from "./Parser.js"
+import RegExpParser from "./RegExpParser.js"
 
 /**
  * @template {Parser<any>} T
@@ -48,16 +49,25 @@ export default class MapParser extends Parser {
      * @param {PathNode} path
      */
     doToString(context, indent, path) {
-        let serializedMapper = this.#mapper.toString()
-        if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
-            serializedMapper = "(...) => { ... }"
-        }
         const childrenPath = { parent: path, parser: this.#parser, index: 0 }
         if (this.isHighlighted(context, path)) {
             context.highlighted = context.highlighted instanceof Parser ? this.#parser : childrenPath
         }
         let result = this.#parser.toString(context, indent, childrenPath)
-        result = Parser.appendBeforeHighlight(result, ` -> map<${serializedMapper}>`)
+        if (this.#parser instanceof RegExpParser) {
+            if (Object.values(RegExpParser.commonParser).includes(this.#parser.regexp)) {
+                if (this.#parser.regexp === RegExpParser.commonParser.numberInteger && this.#mapper === BigInt) {
+                    return "P.numberBigInteger"
+                }
+                return result
+            }
+        }
+        let serializedMapper = this.#mapper.toString()
+        if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
+            serializedMapper = "(...) => { ... }"
+        }
+        serializedMapper = ` -> map<${serializedMapper}>`
+        result = Parser.appendBeforeHighlight(result, serializedMapper)
         return result
     }
 }
