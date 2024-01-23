@@ -1,15 +1,14 @@
 {
   "name": "parsernostrum",
   "type": "module",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A tiny LL parser combinator library for javascript",
   "main": "src/Parsernostrum.js",
   "types": "src/types.js",
   "scripts": {
     "build": "rollup --config",
     "test": "npx playwright test",
-    "playwright": "npx playwright test --ui --debug",
-    "publish": "npm publish --access public"
+    "playwright": "npx playwright test --ui --debug"
   },
   "repository": {
     "type": "git",
