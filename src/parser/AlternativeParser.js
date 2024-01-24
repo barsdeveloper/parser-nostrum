@@ -3,10 +3,7 @@ import Reply from "../Reply.js"
 import StringParser from "./StringParser.js"
 import SuccessParser from "./SuccessParser.js"
 
-/**
- * @template {Parser<any>[]} T
- * @extends Parser<ParserValue<T>>
- */
+/** @template {Parser[]} T */
 export default class AlternativeParser extends Parser {
 
     static highlightRegexp = new RegExp(

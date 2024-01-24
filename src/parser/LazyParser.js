@@ -1,9 +1,6 @@
 import Parser from "./Parser.js"
 
-/**
- * @template {Parser<any>} T
- * @extends Parser<ParserValue<T>>
- */
+/** @template {Parser} T */
 export default class LazyParser extends Parser {
 
     #parser

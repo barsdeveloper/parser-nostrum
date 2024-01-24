@@ -31,7 +31,7 @@ class Reply {
         }
     }
 
-    /** @param {Parsernostrum<Parser<any>>} parsernostrum */
+    /** @param {Parsernostrum<Parser>} parsernostrum */
     static makeContext(parsernostrum = null, input = "") {
         return /** @type {Context} */({
             parsernostrum,
@@ -49,7 +49,6 @@ class Reply {
     }
 }
 
-/** @template T */
 class Parser {
 
     static indentation = "    "
@@ -149,7 +148,7 @@ class Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
-     * @returns {Result<T>}
+     * @returns {Result<ParserValue<any>>}
      */
     parse(context, position, path) {
         return null
@@ -175,10 +174,7 @@ class Parser {
     }
 }
 
-/**
- * @template {String} T
- * @extends {Parser<T>}
- */
+/** @template {String} T */
 class StringParser extends Parser {
 
     #value
@@ -224,7 +220,6 @@ class StringParser extends Parser {
     }
 }
 
-/** @extends Parser<String> */
 class SuccessParser extends Parser {
 
     static instance = new SuccessParser()
@@ -253,10 +248,7 @@ class SuccessParser extends Parser {
     }
 }
 
-/**
- * @template {Parser<any>[]} T
- * @extends Parser<ParserValue<T>>
- */
+/** @template {Parser[]} T */
 class AlternativeParser extends Parser {
 
     static highlightRegexp = new RegExp(
@@ -340,9 +332,8 @@ class AlternativeParser extends Parser {
 }
 
 /**
- * @template {Parser<any>} T
- * @template {(v: ParserValue<T>, input: String, position: Number) => Parsernostrum<Parser<any>>} C
- * @extends Parser<ReturnType<C>>
+ * @template {Parser} T
+ * @template {(v: ParserValue<T>, input: String, position: Number) => Parsernostrum<Parser>} C
  */
 class ChainedParser extends Parser {
 
@@ -367,12 +358,15 @@ class ChainedParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @returns {Result<ParserValue<UnwrapParser<ReturnType<C>>>>}
      */
     parse(context, position, path) {
         const outcome = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 });
         if (!outcome.status) {
+            // @ts-expect-error
             return outcome
         }
+        // @ts-expect-error
         const result = this.#fn(outcome.value, context.input, outcome.position)
             .getParser()
             .parse(context, outcome.position);
@@ -410,7 +404,6 @@ class ChainedParser extends Parser {
     }
 }
 
-/** @extends Parser<any> */
 class FailureParser extends Parser {
 
     static instance = new FailureParser()
@@ -440,10 +433,7 @@ class FailureParser extends Parser {
     }
 }
 
-/**
- * @template {Parser<any>} T
- * @extends Parser<ParserValue<T>>
- */
+/** @template {Parser} T */
 class LazyParser extends Parser {
 
     #parser
@@ -489,7 +479,7 @@ class LazyParser extends Parser {
     }
 }
 
-/** @template {Parser<any>} T */
+/** @template {Parser} T */
 class Lookahead extends Parser {
 
     #parser
@@ -562,10 +552,7 @@ class Lookahead extends Parser {
     }
 }
 
-/**
- * @template T
- * @extends {Parser<T>}
- */
+/** @template T */
 class RegExpParser extends Parser {
 
     /** @type {RegExp} */
@@ -646,9 +633,8 @@ class RegExpParser extends Parser {
 }
 
 /**
- * @template {Parser<any>} T
+ * @template {Parser} T
  * @template P
- * @extends Parser<P>
  */
 class MapParser extends Parser {
 
@@ -744,10 +730,7 @@ class RegExpValueParser extends RegExpParser {
     }
 }
 
-/**
- * @template {Parser<any>[]} T
- * @extends Parser<ParserValue<T>>
- */
+/** @template {Parser[]} T */
 class SequenceParser extends Parser {
 
     #parsers
@@ -809,10 +792,7 @@ class SequenceParser extends Parser {
     }
 }
 
-/**
- * @template {Parser<any>} T
- * @extends {Parser<ParserValue<T>[]>}
- */
+/** @template {Parser} T */
 class TimesParser extends Parser {
 
     #parser
@@ -903,12 +883,12 @@ class TimesParser extends Parser {
     }
 }
 
-/** @template {Parser<any>} T */
+/** @template {Parser} T */
 class Parsernostrum {
 
     #parser
 
-    /** @type {(new (parser: Parser<any>) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
+    /** @type {(new (parser: Parser) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
     Self
 
     static lineColumnFromOffset(string, offset) {
@@ -1149,7 +1129,7 @@ class Parsernostrum {
     }
 
     /**
-     * @template {Parsernostrum<Parser<any>>} P
+     * @template {Parsernostrum<Parser>} P
      * @param {P} separator
      */
     sepBy(separator, allowTrailing = false) {
@@ -1176,7 +1156,7 @@ class Parsernostrum {
     }
 
     /**
-     * @template {Parsernostrum<any>} P
+     * @template {Parsernostrum<Parser>} P
      * @param {(v: ParserValue<T>, input: String, position: Number) => P} fn
      */
     chain(fn) {
@@ -1199,7 +1179,7 @@ class Parsernostrum {
         return this.map(Parsernostrum.#joiner)
     }
 
-    /** @param {Parsernostrum<Parser<any>> | Parser<any> | PathNode} highlight */
+    /** @param {Parsernostrum<Parser> | Parser | PathNode} highlight */
     toString(indent = 0, newline = false, highlight = null) {
         if (highlight instanceof Parsernostrum) {
             highlight = highlight.getParser();

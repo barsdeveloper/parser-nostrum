@@ -1,10 +1,7 @@
 import Parser from "./Parser.js"
 import Reply from "../Reply.js"
 
-/**
- * @template {String} T
- * @extends {Parser<T>}
- */
+/** @template {String} T */
 export default class StringParser extends Parser {
 
     #value

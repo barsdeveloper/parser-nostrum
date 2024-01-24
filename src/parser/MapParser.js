@@ -2,9 +2,8 @@ import Parser from "./Parser.js"
 import RegExpParser from "./RegExpParser.js"
 
 /**
- * @template {Parser<any>} T
+ * @template {Parser} T
  * @template P
- * @extends Parser<P>
  */
 export default class MapParser extends Parser {
 

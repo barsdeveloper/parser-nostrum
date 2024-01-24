@@ -1,7 +1,6 @@
 import Parser from "./Parser.js"
 import Reply from "../Reply.js"
 
-/** @extends Parser<any> */
 export default class FailureParser extends Parser {
 
     static instance = new FailureParser()

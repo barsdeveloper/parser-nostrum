@@ -1,10 +1,7 @@
 import Parser from "./Parser.js"
 import Reply from "../Reply.js"
 
-/**
- * @template {Parser<any>[]} T
- * @extends Parser<ParserValue<T>>
- */
+/** @template {Parser[]} T */
 export default class SequenceParser extends Parser {
 
     #parsers

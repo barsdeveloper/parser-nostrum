@@ -10,13 +10,13 @@ export default class JsonGrammar {
     static #false = P.str("false").map(() => false)
     static #string = P.doubleQuotedString
     static #number = P.numberExponential
-    /** @type {Parsernostrum<Parser<any[]>>} */
+    /** @type {Parsernostrum<Parser>} */
     static #array = P.seq(
         P.reg(/\[\s*/),
         P.lazy(() => this.json).sepBy(P.reg(/\s*,\s*/)),
         P.reg(/\s*\]/)
     ).map(([_0, values, _2]) => values)
-    /** @type {Parsernostrum<Parser<Object>>} */
+    /** @type {Parsernostrum<Parser>} */
     static #object = P.seq(
         P.reg(/\{\s*/),
         P.seq(

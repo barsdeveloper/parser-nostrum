@@ -1,10 +1,7 @@
 import Parser from "./Parser.js"
 import Reply from "../Reply.js"
 
-/**
- * @template T
- * @extends {Parser<T>}
- */
+/** @template T */
 export default class RegExpParser extends Parser {
 
     /** @type {RegExp} */

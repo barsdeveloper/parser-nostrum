@@ -3,10 +3,10 @@
 /**
  * @typedef {{
  *     parent: PathNode?,
-*     parser: Parser<any>,
-*     index: Number,
-* }} PathNode
-*/
+ *     parser: Parser,
+ *     index: Number,
+ * }} PathNode
+ */
 
 /**
  * @template T
@@ -23,14 +23,11 @@
  * @typedef {{
  *     parsernostrum: Parsernostrum,
  *     input: String,
- *     highlighted: Parser<any> | PathNode,
+ *     highlighted: Parser | PathNode,
  * }} Context
  */
 
-/**
- * @template T
- * @typedef {import("./parser/Parser.js").default<T>} Parser
- */
+/** @typedef {import("./parser/Parser.js").default} Parser */
 
 /**
  * @template T
@@ -58,15 +55,15 @@
  * @template T
  * @typedef {T extends [] ? []
  *     : T extends [infer First, ...infer Rest] ? [ParserValue<First>, ...ParserValue<Rest>]
+ *     : T extends import("./parser/AlternativeParser.js").default<infer P> ? UnionFromArray<ParserValue<P>>
+ *     : T extends import("./parser/ChainedParser.js").default<any, infer C> ? ParserValue<UnwrapParser<ReturnType<C>>>
+ *     : T extends import("./parser/LazyParser.js").default<infer P> ? ParserValue<P>
+ *     : T extends import("./parser/Lookahead.js").default ? ""
+ *     : T extends import("./parser/MapParser.js").default<any, infer P> ? P
+ *     : T extends import("./parser/RegExpParser.js").default<infer V> ? V
  *     : T extends import("./parser/SequenceParser.js").default<infer P> ? ParserValue<P>
  *     : T extends import("./parser/StringParser.js").default<infer S> ? S
- *     : T extends import("./parser/MapParser.js").default<any, infer P> ? P
- *     : T extends import("./parser/AlternativeParser.js").default<infer P> ? UnionFromArray<ParserValue<P>>
- *     : T extends import("./parser/LazyParser.js").default<infer P> ? ParserValue<P>
- *     : T extends import("./parser/RegExpParser.js").default<infer V> ? V
  *     : T extends import("./parser/TimesParser.js").default<infer P> ? ParserValue<P>[]
- *     : T extends import("./parser/Parser.js").default<infer V> ? V
- *     : T extends import("./parser/Lookahead.js/index.js").Lookahead ? ""
  *     : never
  * } ParserValue
  */
@@ -76,7 +73,7 @@
  * @typedef {T extends [] ? []
  *     : T extends [infer P] ? [UnwrapParser<P>]
  *     : T extends [infer P, ...infer Rest] ? [UnwrapParser<P>, ...UnwrapParser<Rest>]
- *     : T extends import("./Parsernostrum.js").Parsernostrum<infer P> ? P
- *     : Parser<any>
+ *     : T extends import("./Parsernostrum.js").default<infer P> ? P
+ *     : Parser
  * } UnwrapParser
  */

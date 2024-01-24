@@ -14,12 +14,12 @@ import StringParser from "./parser/StringParser.js"
 import SuccessParser from "./parser/SuccessParser.js"
 import TimesParser from "./parser/TimesParser.js"
 
-/** @template {Parser<any>} T */
+/** @template {Parser} T */
 export default class Parsernostrum {
 
     #parser
 
-    /** @type {(new (parser: Parser<any>) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
+    /** @type {(new (parser: Parser) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
     Self
 
     static lineColumnFromOffset(string, offset) {
@@ -260,7 +260,7 @@ export default class Parsernostrum {
     }
 
     /**
-     * @template {Parsernostrum<Parser<any>>} P
+     * @template {Parsernostrum<Parser>} P
      * @param {P} separator
      */
     sepBy(separator, allowTrailing = false) {
@@ -287,7 +287,7 @@ export default class Parsernostrum {
     }
 
     /**
-     * @template {Parsernostrum<any>} P
+     * @template {Parsernostrum<Parser>} P
      * @param {(v: ParserValue<T>, input: String, position: Number) => P} fn
      */
     chain(fn) {
@@ -310,7 +310,7 @@ export default class Parsernostrum {
         return this.map(Parsernostrum.#joiner)
     }
 
-    /** @param {Parsernostrum<Parser<any>> | Parser<any> | PathNode} highlight */
+    /** @param {Parsernostrum<Parser> | Parser | PathNode} highlight */
     toString(indent = 0, newline = false, highlight = null) {
         if (highlight instanceof Parsernostrum) {
             highlight = highlight.getParser()

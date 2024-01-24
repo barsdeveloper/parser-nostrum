@@ -1,10 +1,8 @@
 import Parser from "./Parser.js"
-import Reply from "../Reply.js"
 
 /**
- * @template {Parser<any>} T
- * @template {(v: ParserValue<T>, input: String, position: Number) => Parsernostrum<Parser<any>>} C
- * @extends Parser<ReturnType<C>>
+ * @template {Parser} T
+ * @template {(v: ParserValue<T>, input: String, position: Number) => Parsernostrum<Parser>} C
  */
 export default class ChainedParser extends Parser {
 
@@ -29,12 +27,15 @@ export default class ChainedParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @returns {Result<ParserValue<UnwrapParser<ReturnType<C>>>>}
      */
     parse(context, position, path) {
         const outcome = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
         if (!outcome.status) {
+            // @ts-expect-error
             return outcome
         }
+        // @ts-expect-error
         const result = this.#fn(outcome.value, context.input, outcome.position)
             .getParser()
             .parse(context, outcome.position)

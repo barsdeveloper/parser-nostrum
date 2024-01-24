@@ -31,7 +31,7 @@ export default class Reply {
         }
     }
 
-    /** @param {Parsernostrum<Parser<any>>} parsernostrum */
+    /** @param {Parsernostrum<Parser>} parsernostrum */
     static makeContext(parsernostrum = null, input = "") {
         return /** @type {Context} */({
             parsernostrum,

@@ -1,7 +1,7 @@
 import Parser from "./Parser.js"
 import Reply from "../Reply.js"
 
-/** @template {Parser<any>} T */
+/** @template {Parser} T */
 export default class Lookahead extends Parser {
 
     #parser

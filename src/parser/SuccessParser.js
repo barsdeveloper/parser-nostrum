@@ -1,8 +1,6 @@
 import Reply from "../Reply.js"
 import Parser from "./Parser.js"
-import StringParser from "./StringParser.js"
 
-/** @extends Parser<String> */
 export default class SuccessParser extends Parser {
 
     static instance = new SuccessParser()
