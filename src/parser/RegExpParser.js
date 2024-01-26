@@ -15,7 +15,7 @@ export default class RegExpParser extends Parser {
 
     static #createEscapeable = character => String.raw`[^${character}\\]*(?:\\.[^${character}\\]*)*`
     static #numberRegex = /[-\+]?(?:\d*\.)?\d+/
-    static commonParser = {
+    static common = {
         number: new RegExp(this.#numberRegex.source + String.raw`(?!\.)`),
         numberInteger: /[\-\+]?\d+(?!\.\d)/,
         numberNatural: /\d+/,
@@ -69,7 +69,7 @@ export default class RegExpParser extends Parser {
     doToString(context, indent, path) {
         let result = "/" + this.#regexp.source + "/"
         const shortname = Object
-            .entries(RegExpParser.commonParser)
+            .entries(RegExpParser.common)
             .find(([k, v]) => v.source === this.#regexp.source)?.[0]
         if (shortname) {
             result = "P." + shortname

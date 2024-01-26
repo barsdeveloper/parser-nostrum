@@ -54,9 +54,9 @@ export default class MapParser extends Parser {
         }
         let result = this.#parser.toString(context, indent, childrenPath)
         if (this.#parser instanceof RegExpParser) {
-            if (Object.values(RegExpParser.commonParser).includes(this.#parser.regexp)) {
+            if (Object.values(RegExpParser.common).includes(this.#parser.regexp)) {
                 if (
-                    this.#parser.regexp === RegExpParser.commonParser.numberInteger
+                    this.#parser.regexp === RegExpParser.common.numberInteger
                     && this.#mapper === /** @type {(v: any) => BigInt} */(BigInt)
                 ) {
                     return "P.numberBigInteger"

@@ -45,49 +45,49 @@ export default class Parsernostrum {
     // Prefedined parsers
 
     /** Parser accepting any valid decimal, possibly signed number */
-    static number = this.reg(RegExpParser.commonParser.number).map(Number)
+    static number = this.reg(RegExpParser.common.number).map(Number)
 
     /** Parser accepting any digits only number */
-    static numberInteger = this.reg(RegExpParser.commonParser.numberInteger).map(Number)
+    static numberInteger = this.reg(RegExpParser.common.numberInteger).map(Number)
 
     /** Parser accepting any digits only number and returns a BigInt */
     static numberBigInteger = this.reg(this.numberInteger.getParser().parser.regexp).map(BigInt)
 
     /** Parser accepting any digits only number */
-    static numberNatural = this.reg(RegExpParser.commonParser.numberNatural).map(Number)
+    static numberNatural = this.reg(RegExpParser.common.numberNatural).map(Number)
 
     /** Parser accepting any valid decimal, possibly signed, possibly in the exponential form number */
-    static numberExponential = this.reg(RegExpParser.commonParser.numberExponential).map(Number)
+    static numberExponential = this.reg(RegExpParser.common.numberExponential).map(Number)
 
     /** Parser accepting any valid decimal number between 0 and 1 */
-    static numberUnit = this.reg(RegExpParser.commonParser.numberUnit).map(Number)
+    static numberUnit = this.reg(RegExpParser.common.numberUnit).map(Number)
 
     /** Parser accepting any integer between 0 and 255 */
-    static numberByte = this.reg(RegExpParser.commonParser.numberByte).map(Number)
+    static numberByte = this.reg(RegExpParser.common.numberByte).map(Number)
 
     /** Parser accepting whitespace */
-    static whitespace = this.reg(RegExpParser.commonParser.whitespace)
+    static whitespace = this.reg(RegExpParser.common.whitespace)
 
     /** Parser accepting whitespace */
-    static whitespaceOpt = this.reg(RegExpParser.commonParser.whitespaceOpt)
+    static whitespaceOpt = this.reg(RegExpParser.common.whitespaceOpt)
 
     /** Parser accepting whitespace that spans on a single line */
-    static whitespaceInline = this.reg(RegExpParser.commonParser.whitespaceInline)
+    static whitespaceInline = this.reg(RegExpParser.common.whitespaceInline)
 
     /** Parser accepting whitespace that spans on a single line */
-    static whitespaceInlineOpt = this.reg(RegExpParser.commonParser.whitespaceInlineOpt)
+    static whitespaceInlineOpt = this.reg(RegExpParser.common.whitespaceInlineOpt)
 
     /** Parser accepting whitespace that contains a list a newline */
-    static whitespaceMultiline = this.reg(RegExpParser.commonParser.whitespaceMultiline)
+    static whitespaceMultiline = this.reg(RegExpParser.common.whitespaceMultiline)
 
     /** Parser accepting a double quoted string and returns the content */
-    static doubleQuotedString = this.reg(RegExpParser.commonParser.doubleQuotedString, 1)
+    static doubleQuotedString = this.reg(RegExpParser.common.doubleQuotedString, 1)
 
     /** Parser accepting a single quoted string and returns the content */
-    static singleQuotedString = this.reg(RegExpParser.commonParser.singleQuotedString, 1)
+    static singleQuotedString = this.reg(RegExpParser.common.singleQuotedString, 1)
 
     /** Parser accepting a backtick quoted string and returns the content */
-    static backtickQuotedString = this.reg(RegExpParser.commonParser.backtickQuotedString, 1)
+    static backtickQuotedString = this.reg(RegExpParser.common.backtickQuotedString, 1)
 
     /** @param {T} parser */
     constructor(parser, optimized = false) {
