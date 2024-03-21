@@ -15,27 +15,30 @@ import P from "parsernostrum"
 
 // Create a parser
 /** @type {P<any>} */
-const palindromeParser = P.alt(
-    P.reg(/[a-z]/).chain(c =>
-        P.seq(
-            P.lazy(() => palindromeParser).opt(),
-            P.str(c)
-        ).map(([recursion, _]) => c + recursion + c)
-    ),
-    P.reg(/([a-z])\1?/)
-).opt()
+const dateParser = P.seq(
+    P.reg(/\d{4,}/).map(Number),
+    P.str("-"),
+    P.reg(/\d\d/).map(Number),
+    P.str("-"),
+    P.reg(/\d\d/).map(Number),
+)
+    .map(([y, _1, m, _2, d]) => [y, m, d])
+    .assert(([y, _1, m, _2, d]) =>
+        m >= 1 && m <= 12
+        && d >= 1 && d <= 31 && (m !== 2 || d <= 29)
+    )
 
 // Use the parsing methods to check the text
 try {
     // This method throws in case it doesn't parse correctly
-    palindromeParser.parse("Not a palindrome!")
+    dateParser.parse("Not a date!")
 } catch (e) {
-    console.log(e.message) // Could not parse "Not a palindrome!"
+    console.log(e.message) // Could not parse "Not a date!"
 }
 // This method returns an object with status (can be used as a boolean to check if success) and value keys
-let result = palindromeParser.run("Also not a palindrome")
+let result = dateParser.run("Also not a date")
 console.log(result.value) // null
-console.log(palindromeParser.parse("asantalivedasadevilatnasa")) // asantalivedasadevilatnasa
+console.log(dateParser.parse("2024-03-21")) // [2024, 3, 21]
 ```
 
 ## Documentation
@@ -53,7 +56,7 @@ P.reg(/\d+/)
 ```
 
 ### `regArray(value)`
-Parses a regular expression and returns all its captured groups array exactly as returned by the `RegExp.exec()` method.
+Parses a regular expression and returns all its captured groups array exactly as returned by `RegExp.exec()`.
 ```JavaScript
 P.regArray(/begin\s*(\w*)\s*(\w*)\s*end/)
 ```
@@ -65,7 +68,7 @@ P.seq(P.str("hello"), P.str("world"))
 ```
 
 ### `alt(...parsers)`
-Offers alternative parsers succeeds if any parser matches.
+Offers alternative parsers succeeds with the result of the first matching parser.
 ```JavaScript
 P.alt(P.str("yes"), P.str("no"))
 ```
@@ -89,8 +92,9 @@ const matcheParentheses = P.seq(
 )
 ```
 >[!WARNING]
->LL parsers do not generally support left recursion. It is therefore important that your recursive parsers always have an actual parser as the first element (in this case `P.str("("))`). Otherwise the code will result in a runtime infinite recursion exception.
->In general it is always possible to rewrite a grammar to remove left recursion.
+>LL parsers do not generally support left recursion. It is therefore important that your recursive parsers always have
+>an actual parser as the first element (in this case `P.str("(")`). Otherwise the code will result in a runtime
+>infinite recursion exception. In general it is always possible to rewrite a grammar to remove left recursion.
 
 ### `.times(min, max)`
 Matches a parser a specified number of times.
@@ -106,25 +110,25 @@ myParser.many()
 ```
 
 ### `.atLeast(n)`
-Ensures a parser matches at least `n` times.
+Matches a parser at least `n` times.
 ```JavaScript
 myParser.atLeast(2)
 ```
 
 ### `.atMost(n)`
-Limits a parser match to at most `n` times.
+Matches a parser at most `n` times.
 ```JavaScript
 myParser.atMost(5)
 ```
 
 ### `.opt()`
-Makes a parser optional.
+Optional parser, it is equivalent to `P.alt(myParser, P.success())`.
 ```JavaScript
 myParser.opt()
 ```
 
 ### `.sepBy(separator)`
-Parses a list of elements separated by a given separator.
+Parses a list of elements separated by a given separator, expects at least one myParser match.
 ```JavaScript
 myParser.sepBy(P.reg(/\s*,\s*/))
 ```
@@ -142,7 +146,7 @@ myParser.map(n => `Number: ${n}`)
 ```
 
 ### `.chain(fn)`
-Chains the output of one parser to another.
+Chains the output of one parser to another parser (usefull to decide at runtime how to continue parsing).
 ```JavaScript
 const p = P.reg(/[([{]/).chain(v => (
     {
@@ -156,7 +160,7 @@ const p = P.reg(/[([{]/).chain(v => (
 ### `.assert(fn)`
 Asserts a condition on the parsed result. If the method returns false, the parser is considered failed even though the actual parser matched the input.
 ```JavaScript
-P.numberNatural.assert(n => n % 2 == 0) // Will even numbers only
+P.numberNatural.assert(n => n % 2 == 0) // Will parse even numbers only
 ```
 
 ### `.join(value)`
@@ -170,8 +174,8 @@ Some usefull parsers that can be reused and combined with other parsers.
 - `number`: the most common numbers, possibly fractional and signed
 - `numberInteger`: possibly signed integer
 - `numberBigInteger`: same as numberInteger but returns a BigInt JavaScript object
-- `numberBigInteger`: just digits
 - `numberExponential`: a number written possibly in the exponential form (e.g.: 1E-5)
+- `numberNatural`: just digits
 - `numberUnit`: a number between 0 and 1
 - `numberByte`: a integer between 0 and 255
 - `whitespace`: any whitespace (/\s+/)

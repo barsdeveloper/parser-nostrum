@@ -23,27 +23,32 @@ test.afterAll(async () => {
 test("Readme code", async ({ page }) => {
     // Create a parser
     /** @type {P<any>} */
-    const palindromeParser = P.alt(
-        P.reg(/[a-z]/).chain(c =>
-            P.seq(
-                P.lazy(() => palindromeParser).opt(),
-                P.str(c)
-            ).map(([recursion, _]) => c + recursion + c)
-        ),
-        P.reg(/([a-z])\1?/)
-    ).opt()
+    const dateParser = P.seq(
+        P.reg(/\d{4,}/).map(Number),
+        P.str("-"),
+        P.reg(/\d\d/).map(Number),
+        P.str("-"),
+        P.reg(/\d\d/).map(Number),
+    )
+        .map(([y, _1, m, _2, d]) => [y, m, d])
+        .assert(([y, m, d]) =>
+            m >= 1 && m <= 12
+            && d >= 1 && d <= 31 && (m !== 2 || d <= 29)
+        )
 
     // Use the parsing methods to check the text
     try {
-        // This method throws in case it doesn't parse
-        palindromeParser.parse("Not a palindrome!")
+        // This method throws in case it doesn't parse correctly
+        dateParser.parse("Not a date!")
     } catch (e) {
-        console.log(e.message) // Could not parse "Not a palindrome!"
+        console.log(e.message) // Could not parse "Not a date!"
     }
     // This method returns an object with status (can be used as a boolean to check if success) and value keys
-    let result = palindromeParser.run("Also not a palindrome")
+    let result = dateParser.run("Also not a date")
     console.log(result.value) // null
-    console.log(palindromeParser.parse("asantalivedasadevilatnasa")) // asantalivedasadevilatnasa
+    console.log(dateParser.parse("2024-03-21")) // [2024, 3, 21]
+
+    expect(dateParser.parse("2024-03-21")).toEqual([2024, 3, 21])
 })
 
 test("Matched parentheses", async ({ page }) => {
