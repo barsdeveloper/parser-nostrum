@@ -1,5 +1,5 @@
-import Parser from "./Parser.js"
 import Reply from "../Reply.js"
+import Parser from "./Parser.js"
 
 /** @template {Parser[]} T */
 export default class SequenceParser extends Parser {
@@ -19,16 +19,14 @@ export default class SequenceParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      */
-    parse(context, position, path) {
+    parse(context, position, path, index) {
+        path = this.makePath(path, index)
         const value = /** @type {ParserValue<T>} */(new Array(this.#parsers.length))
         const result = Reply.makeSuccess(position, value)
         for (let i = 0; i < this.#parsers.length; ++i) {
-            const outcome = this.#parsers[i].parse(
-                context,
-                result.position,
-                { parent: path, parser: this.#parsers[i], index: i }
-            )
+            const outcome = this.#parsers[i].parse(context, result.position, path, i)
             if (outcome.bestPosition > result.bestPosition) {
                 result.bestParser = outcome.bestParser
                 result.bestPosition = outcome.bestPosition
@@ -47,17 +45,17 @@ export default class SequenceParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
-        const indentation = Parser.indentation.repeat(indent)
-        const deeperIndentation = Parser.indentation.repeat(indent + 1)
+    doToString(context, indentation, path, index) {
+        const deeperIndentation = indentation + Parser.indentation
         const result = "SEQ<\n"
-            + (this.isHighlighted(context, path) ? `${indentation}^^^ ${Parser.highlight}\n` : "")
+            + deeperIndentation
             + this.#parsers
-                .map((parser, index) => deeperIndentation + parser.toString(context, indent + 1, { parent: path, parser, index }))
-                .join("\n")
+                .map((parser, index) => parser.toString(context, deeperIndentation, path, index))
+                .join("\n" + deeperIndentation)
             + "\n" + indentation + ">"
         return result
     }

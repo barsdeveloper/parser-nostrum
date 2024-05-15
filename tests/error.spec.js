@@ -1,6 +1,6 @@
-import { test, expect } from "@playwright/test"
-import JsonGrammar from "../src/grammars/JsonGrammar.js"
+import { expect, test } from "@playwright/test"
 import P from "../src/Parsernostrum.js"
+import JsonGrammar from "../src/grammars/JsonGrammar.js"
 import MathGrammar from "../src/grammars/MathGrammar.js"
 
 test("Test 1", async ({ page }) => {
@@ -11,19 +11,20 @@ test("Test 1", async ({ page }) => {
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: alphaUnrelated\n'
-        + '\n'
-        + 'Input: alphaUnrelated\n'
-        + '            ^ From here (line: 1, column: 6, offset: 5)\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    SEQ<\n'
-        + '        "alpha"\n'
-        + '        ^^^^^^^ Last valid parser\n'
-        + '        "beta"\n'
-        + '    >\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: alphaUnrelated`,
+        String.raw``,
+        String.raw`Input: alphaUnrelated`,
+        String.raw`            ^ From here (line: 1, column: 6, offset: 5)`,
+        String.raw``,
+        String.raw`Last valid parser matched:`,
+        String.raw`    SEQ<`,
+        String.raw`        ┌─[ Last valid parser ]─┐`,
+        String.raw`        | "alpha"               |`,
+        String.raw`        └───────────────────────┘`,
+        String.raw`        "beta"`,
+        String.raw`    >`,
+    ].map(v => v + "\n").join(""))
 })
 
 test("Test 2", async ({ page }) => {
@@ -39,33 +40,34 @@ test("Test 2", async ({ page }) => {
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: aaaa\n'
-        + '\n'
-        + 'Input: aaaa\n'
-        + '           ^ From here (line: 1, column: 5, offset: 4), end of string\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    ALT<\n'
-        + '        SEQ<\n'
-        + '            "aaa"\n'
-        + '            "alpha"\n'
-        + '        >\n'
-        + '        | SEQ<\n'
-        + '            "aaaa"\n'
-        + '            ^^^^^^ Last valid parser\n'
-        + '            "bc"\n'
-        + '        >\n'
-        + '        | SEQ<\n'
-        + '            "aaaaa"\n'
-        + '            "xyz"\n'
-        + '        >\n'
-        + '        | SEQ<\n'
-        + '            "aa"\n'
-        + '            b\n'
-        + '        >\n'
-        + '    >\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: aaaa`,
+        String.raw``,
+        String.raw`Input: aaaa`,
+        String.raw`           ^ From here (line: 1, column: 5, offset: 4), end of string`,
+        String.raw``,
+        String.raw`Last valid parser matched:`,
+        String.raw`    ALT<`,
+        String.raw`        SEQ<`,
+        String.raw`            "aaa"`,
+        String.raw`            "alpha"`,
+        String.raw`        >`,
+        String.raw`        | SEQ<`,
+        String.raw`              ┌─[ Last valid parser ]─┐`,
+        String.raw`              | "aaaa"                |`,
+        String.raw`              └───────────────────────┘`,
+        String.raw`              "bc"`,
+        String.raw`          >`,
+        String.raw`        | SEQ<`,
+        String.raw`              "aaaaa"`,
+        String.raw`              "xyz"`,
+        String.raw`          >`,
+        String.raw`        | SEQ<`,
+        String.raw`              "aa"`,
+        String.raw`              "b"`,
+        String.raw`          >`,
+        String.raw`    >`,
+    ].map(v => v + "\n").join(""))
 })
 
 test("Test JsonGrammar 1", async ({ page }) => {
@@ -98,52 +100,57 @@ test("Test JsonGrammar 1", async ({ page }) => {
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: { ... "glossary": { ... "title": "example glossary", ... "Gl\n'
-        + '\n'
-        + 'Input: ..."Abbrev": [ISO 8879:1986", ... "GlossDef": { ... "para": "A ...\n'
-        + '                     ^ From here (line: 12, column: 44, offset: 511)\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    ALT<\n'
-        + '        P.doubleQuotedString\n'
-        + '        | P.numberExponential\n'
-        + '        | SEQ<\n'
-        + '            /\\{\\s*/\n'
-        + '            SEQ<\n'
-        + '                SEQ<\n'
-        + '                    P.doubleQuotedString\n'
-        + '                    /\\s*:\\s*/\n'
-        + '                    <...>\n'
-        + '                > -> map<(...) => { ... }>\n'
-        + '                SEQ<\n'
-        + '                    /\\s*,\\s*/\n'
-        + '                    SEQ<\n'
-        + '                        P.doubleQuotedString\n'
-        + '                        /\\s*:\\s*/\n'
-        + '                        <...>\n'
-        + '                    > -> map<(...) => { ... }>\n'
-        + '                > -> map<([_, v]) => v>*\n'
-        + '            > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }>\n'
-        + '            /\\s*}/\n'
-        + '        > -> map<([_0, object, _2]) => object>\n'
-        + '        | SEQ<\n'
-        + '            /\\[\\s*/\n'
-        + '            ^^^^^^^ Last valid parser\n'
-        + '            SEQ<\n'
-        + '                <...>\n'
-        + '                SEQ<\n'
-        + '                    /\\s*,\\s*/\n'
-        + '                    <...>\n'
-        + '                > -> map<([_, v]) => v>*\n'
-        + '            > -> map<([first, rest]) => [first, ...rest]>\n'
-        + '            /\\s*\\]/\n'
-        + '        > -> map<([_0, values, _2]) => values>\n'
-        + '        | "true" -> map<() => true>\n'
-        + '        | "false" -> map<() => false>\n'
-        + '        | "null" -> map<() => null>\n'
-        + '    >\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: { ... "glossary": { ... "title": "example glossary", ... "Gl`,
+        String.raw``,
+        String.raw`Input: ..."Abbrev": [ISO 8879:1986", ... "GlossDef": { ... "para": "A ...`,
+        String.raw`                     ^ From here (line: 12, column: 44, offset: 511)`,
+        String.raw``,
+        String.raw`Last valid parser matched:`,
+        String.raw`    ALT<`,
+        String.raw`        P.doubleQuotedString`,
+        String.raw`        | P.numberExponential`,
+        String.raw`        | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐`,
+        String.raw`          | SEQ<                                                                       |`,
+        String.raw`          |     /\{\s*/                                                                |`,
+        String.raw`          |     SEQ<                                                                   |`,
+        String.raw`          |         SEQ<                                                               |`,
+        String.raw`          |             P.doubleQuotedString                                           |`,
+        String.raw`          |             /\s*:\s*/                                                      |`,
+        String.raw`          |             <...>                                                          |`,
+        String.raw`          |         > -> map<(...) => { ... }>                                         |`,
+        String.raw`          |         SEQ<                                                               |`,
+        String.raw`          |             /\s*,\s*/                                                      |`,
+        String.raw`          |             SEQ<                                                           |`,
+        String.raw`          |                 P.doubleQuotedString                                       |`,
+        String.raw`          |                 /\s*:\s*/                                                  |`,
+        String.raw`          |                 <...>                                                      |`,
+        String.raw`          |             > -> map<(...) => { ... }>                                     |`,
+        String.raw`          |         > -> map<([_, v]) => v>*                                           |`,
+        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> |`,
+        String.raw`          |     /\s*}/                                                                 |`,
+        String.raw`          | > -> map<([_0, object, _2]) => object>                                     |`,
+        String.raw`          └────────────────────────────────────────────────────────────────────────────┘`,
+        String.raw`        | ┌─[ Array ]─────────────────────────────────────────┐`,
+        String.raw`          | SEQ<                                              |`,
+        String.raw`          |     ┌─[ Last valid parser ]─┐                     |`,
+        String.raw`          |     | /\[\s*/               |                     |`,
+        String.raw`          |     └───────────────────────┘                     |`,
+        String.raw`          |     SEQ<                                          |`,
+        String.raw`          |         <...>                                     |`,
+        String.raw`          |         SEQ<                                      |`,
+        String.raw`          |             /\s*,\s*/                             |`,
+        String.raw`          |             <...>                                 |`,
+        String.raw`          |         > -> map<([_, v]) => v>*                  |`,
+        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> |`,
+        String.raw`          |     /\s*\]/                                       |`,
+        String.raw`          | > -> map<([_0, values, _2]) => values>            |`,
+        String.raw`          └───────────────────────────────────────────────────┘`,
+        String.raw`        | "true" -> map<() => true>`,
+        String.raw`        | "false" -> map<() => false>`,
+        String.raw`        | "null" -> map<() => null>`,
+        String.raw`    >`,
+    ].map(v => v + "\n").join(""))
 })
 
 test("Test JsonGrammar 2", async ({ page }) => {
@@ -151,77 +158,81 @@ test("Test JsonGrammar 2", async ({ page }) => {
     try {
         JsonGrammar.json.parse(`
             {
-                "glossary": {
-                    "title": "example glossary",
-                    "GlossDiv": {
-                        "title": "S",
-                        "GlossList": {
-                            "GlossEntry": {
-                                "ID": "SGML",
-                                "SortAs": "SGML",
-                                "GlossTerm": "Standard Generalized Markup Language",
-                                "Acronym": "SGML",
-                                "Abbrev": "ISO 8879:1986",
-                                "GlossDef": {
-                                    "para": "A meta-markup language, used to create markup languages such as DocBook.",
-                                    "GlossSeeAlso": ["GML", "XML"
+            "glossary": {
+                "title": "example glossary",
+                "GlossDiv": {
+                    "title": "S",
+                    "GlossList": {
+                        "GlossEntry": {
+                            "ID": "SGML",
+                            "SortAs": "SGML",
+                            "GlossTerm": "Standard Generalized Markup Language",
+                            "Acronym": "SGML",
+                            "Abbrev": "ISO 8879:1986",
+                            "GlossDef": {
+                                "para": "A meta-markup language, used to create markup languages such as DocBook.",
+                                "GlossSeeAlso": ["GML", "XML"
                                 },
-                                "GlossSee": "markup"
-                            }
+                            "GlossSee": "markup"
                         }
                     }
                 }
             }
-        `.trim())
+        }
+            `.trim())
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: { ... "glossary": { ... "title": "example glossary", ... "Gl\n'
-        + '\n'
-        + 'Input: ..."GlossSeeAlso": ["GML", "XML" ... }, ... "GlossSee": "markup...\n'
-        + '                                       ^ From here (line: 15, column: 66, offset: 758)\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    ALT<\n'
-        + '        P.doubleQuotedString\n'
-        + '        ^^^^^^^^^^^^^^^^^^^^ Last valid parser\n'
-        + '        | P.numberExponential\n'
-        + '        | SEQ<\n'
-        + '            /\\{\\s*/\n'
-        + '            SEQ<\n'
-        + '                SEQ<\n'
-        + '                    P.doubleQuotedString\n'
-        + '                    /\\s*:\\s*/\n'
-        + '                    <...>\n'
-        + '                > -> map<(...) => { ... }>\n'
-        + '                SEQ<\n'
-        + '                    /\\s*,\\s*/\n'
-        + '                    SEQ<\n'
-        + '                        P.doubleQuotedString\n'
-        + '                        /\\s*:\\s*/\n'
-        + '                        <...>\n'
-        + '                    > -> map<(...) => { ... }>\n'
-        + '                > -> map<([_, v]) => v>*\n'
-        + '            > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }>\n'
-        + '            /\\s*}/\n'
-        + '        > -> map<([_0, object, _2]) => object>\n'
-        + '        | SEQ<\n'
-        + '            /\\[\\s*/\n'
-        + '            SEQ<\n'
-        + '                <...>\n'
-        + '                SEQ<\n'
-        + '                    /\\s*,\\s*/\n'
-        + '                    <...>\n'
-        + '                > -> map<([_, v]) => v>*\n'
-        + '            > -> map<([first, rest]) => [first, ...rest]>\n'
-        + '            /\\s*\\]/\n'
-        + '        > -> map<([_0, values, _2]) => values>\n'
-        + '        | "true" -> map<() => true>\n'
-        + '        | "false" -> map<() => false>\n'
-        + '        | "null" -> map<() => null>\n'
-        + '    >\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: { ... "glossary": { ... "title": "example glossary", ... "Gl`,
+        String.raw``,
+        String.raw`Input: ..."GlossSeeAlso": ["GML", "XML" ... }, ... "GlossSee": "markup...`,
+        String.raw`                                       ^ From here (line: 15, column: 62, offset: 702)`,
+        String.raw``,
+        String.raw`Last valid parser matched:`,
+        String.raw`    ALT<`,
+        String.raw`        P.doubleQuotedString`,
+        String.raw`        ^^^^^^^^^^^^^^^^^^^^ Last valid parser`,
+        String.raw`        | P.numberExponential`,
+        String.raw`        | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐`,
+        String.raw`          | SEQ<                                                                       |`,
+        String.raw`          |     /\{\s*/                                                                |`,
+        String.raw`          |     SEQ<                                                                   |`,
+        String.raw`          |         SEQ<                                                               |`,
+        String.raw`          |             P.doubleQuotedString                                           |`,
+        String.raw`          |             /\s*:\s*/                                                      |`,
+        String.raw`          |             <...>                                                          |`,
+        String.raw`          |         > -> map<(...) => { ... }>                                         |`,
+        String.raw`          |         SEQ<                                                               |`,
+        String.raw`          |             /\s*,\s*/                                                      |`,
+        String.raw`          |             SEQ<                                                           |`,
+        String.raw`          |                 P.doubleQuotedString                                       |`,
+        String.raw`          |                 /\s*:\s*/                                                  |`,
+        String.raw`          |                 <...>                                                      |`,
+        String.raw`          |             > -> map<(...) => { ... }>                                     |`,
+        String.raw`          |         > -> map<([_, v]) => v>*                                           |`,
+        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> |`,
+        String.raw`          |     /\s*}/                                                                 |`,
+        String.raw`          | > -> map<([_0, object, _2]) => object>                                     |`,
+        String.raw`          └────────────────────────────────────────────────────────────────────────────┘`,
+        String.raw`        | ┌─[ Array ]─────────────────────────────────────────┐`,
+        String.raw`          | SEQ<                                              |`,
+        String.raw`          |     /\[\s*/                                       |`,
+        String.raw`          |     SEQ<                                          |`,
+        String.raw`          |         <...>                                     |`,
+        String.raw`          |         SEQ<                                      |`,
+        String.raw`          |             /\s*,\s*/                             |`,
+        String.raw`          |             <...>                                 |`,
+        String.raw`          |         > -> map<([_, v]) => v>*                  |`,
+        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> |`,
+        String.raw`          |     /\s*\]/                                       |`,
+        String.raw`          | > -> map<([_0, values, _2]) => values>            |`,
+        String.raw`          └───────────────────────────────────────────────────┘`,
+        String.raw`        | "true" -> map<() => true>`,
+        String.raw`        | "false" -> map<() => false>`,
+        String.raw`        | "null" -> map<() => null>`,
+        String.raw`    >`,
+    ].map(v => v + "\n").join(""))
 })
 
 test("Test JsonGrammar 3", async ({ page }) => {
@@ -229,76 +240,79 @@ test("Test JsonGrammar 3", async ({ page }) => {
     try {
         JsonGrammar.json.parse(`
             {
-                "glossary": {
-                    "title": "example glossary",
-                    "GlossDiv": {
-                        "title": "S",
-                        "GlossList": {
-                            "GlossEntry": {
-                                "ID": "SGML",
-                                "SortAs": "SGML",
-                                "GlossTerm": "Standard Generalized Markup Language",
-                                "Acronym": "SGML",
-                                "Abbrev": "ISO 8879:1986",
-                                "GlossDef": {
-                                    "para": "A meta-markup language, used to create markup languages such as DocBook.",
-                                    "GlossSeeAlso": ["GML", "XML"]
-                                },
-                                "GlossSee": "markup"
-                            }
+            "glossary": {
+                "title": "example glossary",
+                "GlossDiv": {
+                    "title": "S",
+                    "GlossList": {
+                        "GlossEntry": {
+                            "ID": "SGML",
+                            "SortAs": "SGML",
+                            "GlossTerm": "Standard Generalized Markup Language",
+                            "Acronym": "SGML",
+                            "Abbrev": "ISO 8879:1986",
+                            "GlossDef": {
+                                "para": "A meta-markup language, used to create markup languages such as DocBook.",
+                                "GlossSeeAlso": ["GML", "XML"]
+                            },
+                            "GlossSee": "markup"
                         }
                     }
                 }
-        `.trim())
+            }
+                `.trim())
     } catch (e) {
         error = /** @type {Error} */(e).message
-    }
-    expect(error).toEqual(
-        'Could not parse: { ... "glossary": { ... "title": "example glossary", ... "Gl\n'
-        + '\n'
-        + 'Input: ...} ... } ... } ... }\n'
-        + '                             ^ From here (line: 21, column: 18, offset: 943), end of string\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    ALT<\n'
-        + '        P.doubleQuotedString\n'
-        + '        | P.numberExponential\n'
-        + '        | SEQ<\n'
-        + '            /\\{\\s*/\n'
-        + '            SEQ<\n'
-        + '                SEQ<\n'
-        + '                    P.doubleQuotedString\n'
-        + '                    /\\s*:\\s*/\n'
-        + '                    <...>\n'
-        + '                > -> map<(...) => { ... }>\n'
-        + '                SEQ<\n'
-        + '                    /\\s*,\\s*/\n'
-        + '                    SEQ<\n'
-        + '                        P.doubleQuotedString\n'
-        + '                        /\\s*:\\s*/\n'
-        + '                        <...>\n'
-        + '                    > -> map<(...) => { ... }>\n'
-        + '                > -> map<([_, v]) => v>*\n'
-        + '            > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }>\n'
-        + '            /\\s*}/\n'
-        + '            ^^^^^^ Last valid parser\n'
-        + '        > -> map<([_0, object, _2]) => object>\n'
-        + '        | SEQ<\n'
-        + '            /\\[\\s*/\n'
-        + '            SEQ<\n'
-        + '                <...>\n'
-        + '                SEQ<\n'
-        + '                    /\\s*,\\s*/\n'
-        + '                    <...>\n'
-        + '                > -> map<([_, v]) => v>*\n'
-        + '            > -> map<([first, rest]) => [first, ...rest]>\n'
-        + '            /\\s*\\]/\n'
-        + '        > -> map<([_0, values, _2]) => values>\n'
-        + '        | "true" -> map<() => true>\n'
-        + '        | "false" -> map<() => false>\n'
-        + '        | "null" -> map<() => null>\n'
-        + '    >\n'
-    )
+    } expect(error).toEqual([
+        String.raw`Could not parse: { ... "glossary": { ... "title": "example glossary", ... "Gl`,
+        String.raw``,
+        String.raw`Input: .... } ... } ... }`,
+        String.raw`                         ^ From here (line: 21, column: 14, offset: 863), end of string`,
+        String.raw``,
+        String.raw`Last valid parser matched:`,
+        String.raw`    ALT<`,
+        String.raw`        P.doubleQuotedString`,
+        String.raw`        ^^^^^^^^^^^^^^^^^^^^ Last valid parser`,
+        String.raw`        | P.numberExponential`,
+        String.raw`        | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐`,
+        String.raw`          | SEQ<                                                                       |`,
+        String.raw`          |     /\{\s*/                                                                |`,
+        String.raw`          |     SEQ<                                                                   |`,
+        String.raw`          |         SEQ<                                                               |`,
+        String.raw`          |             P.doubleQuotedString                                           |`,
+        String.raw`          |             /\s*:\s*/                                                      |`,
+        String.raw`          |             <...>                                                          |`,
+        String.raw`          |         > -> map<(...) => { ... }>                                         |`,
+        String.raw`          |         SEQ<                                                               |`,
+        String.raw`          |             /\s*,\s*/                                                      |`,
+        String.raw`          |             SEQ<                                                           |`,
+        String.raw`          |                 P.doubleQuotedString                                       |`,
+        String.raw`          |                 /\s*:\s*/                                                  |`,
+        String.raw`          |                 <...>                                                      |`,
+        String.raw`          |             > -> map<(...) => { ... }>                                     |`,
+        String.raw`          |         > -> map<([_, v]) => v>*                                           |`,
+        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> |`,
+        String.raw`          |     /\s*}/                                                                 |`,
+        String.raw`          | > -> map<([_0, object, _2]) => object>                                     |`,
+        String.raw`          └────────────────────────────────────────────────────────────────────────────┘`,
+        String.raw`        | ┌─[ Array ]─────────────────────────────────────────┐`,
+        String.raw`          | SEQ<                                              |`,
+        String.raw`          |     /\[\s*/                                       |`,
+        String.raw`          |     SEQ<                                          |`,
+        String.raw`          |         <...>                                     |`,
+        String.raw`          |         SEQ<                                      |`,
+        String.raw`          |             /\s*,\s*/                             |`,
+        String.raw`          |             <...>                                 |`,
+        String.raw`          |         > -> map<([_, v]) => v>*                  |`,
+        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> |`,
+        String.raw`          |     /\s*\]/                                       |`,
+        String.raw`          | > -> map<([_0, values, _2]) => values>            |`,
+        String.raw`          └───────────────────────────────────────────────────┘`,
+        String.raw`        | "true" -> map<() => true>`,
+        String.raw`        | "false" -> map<() => false>`,
+        String.raw`        | "null" -> map<() => null>`,
+        String.raw`    >`,
+    ].map(v => v + "\n").join(""))
 })
 
 test("Test MathGrammar 1", async ({ page }) => {
@@ -349,7 +363,7 @@ test("Test MathGrammar 1", async ({ page }) => {
 test("Test MathGrammar 2", async ({ page }) => {
     let error = ""
     try {
-        MathGrammar.expression.parse(`-30+(2^(1 + 1)*5))`)
+        MathGrammar.expression.parse(`- 30 + (2 ^ (1 + 1) * 5))`)
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
@@ -394,7 +408,7 @@ test("Test MathGrammar 2", async ({ page }) => {
 test("Test MathGrammar 3", async ({ page }) => {
     let error = ""
     try {
-        MathGrammar.expression.parse(`9 + (2^x*4)`)
+        MathGrammar.expression.parse(`9 + (2 ^ x * 4)`)
     } catch (e) {
         error = /** @type {Error} */(e).message
     }

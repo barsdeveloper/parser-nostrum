@@ -8,19 +8,6 @@ export default class Parser {
     /** @type {(new (...args: any) => Parser) & typeof Parser} */
     Self
 
-    /**
-     * @param {String} target
-     * @param {String} value
-     */
-    static appendBeforeHighlight(target, value) {
-        if (target.endsWith(Parser.highlight)) {
-            target = target.replace(/(?=(?:\n|^).+$)/, value)
-        } else {
-            target += value
-        }
-        return target
-    }
-
     /** @param {String} value */
     static lastRowLength(value, firstRowPadding = 0) {
         // This regex always matches and group 2 (content of the last row) is always there
@@ -28,6 +15,44 @@ export default class Parser {
         // Group 1 tells wheter or not it matched the first row (last row is also first row)
         const additional = match[1] !== undefined ? firstRowPadding : 0
         return match[2].length + additional
+    }
+
+    /** @param {String} value */
+    static frame(value, label = "", indentation = "") {
+        label = value ? "[ " + label + " ]" : ""
+        let rows = value.split("\n")
+        const width = Math.max(...rows.map(r => r.length))
+        const rightPadding = width < label.length ? " ".repeat(label.length - width) : ""
+        for (let i = 0; i < rows.length; ++i) {
+            rows[i] =
+                indentation
+                + "| "
+                + rows[i]
+                + " ".repeat(width - rows[i].length)
+                + rightPadding
+                + " |"
+        }
+        if (label.length < width) {
+            label = label + "─".repeat(width - label.length)
+        }
+        const rowA = "┌─" + label + "─┐"
+        const rowB = indentation + "└─" + "─".repeat(label.length) + "─┘"
+        rows = [rowA, ...rows, rowB]
+        return rows.join("\n")
+    }
+
+    /** @returns {Parser} */
+    getConcreteParser() {
+        return this
+    }
+
+    /**
+     * @param {PathNode} path
+     * @param {Number} index
+     * @returns {PathNode}
+     */
+    makePath(path, index) {
+        return { parent: path, parser: this, index }
     }
 
     /**
@@ -38,7 +63,7 @@ export default class Parser {
         if (context.highlighted instanceof Parser) {
             return context.highlighted === this
         }
-        if (!context.highlighted || !path) {
+        if (!context.highlighted || !path?.parser) {
             return false
         }
         let a, prevA, b, prevB
@@ -46,12 +71,12 @@ export default class Parser {
         for (
             a = path,
             b = /** @type {PathNode} */(context.highlighted);
-            a && b;
+            a.parser && b.parser;
             prevA = a, a = a.parent,
             prevB = b, b = b.parent
         ) {
             if (a.parser !== b.parser || a.index !== b.index) {
-                if (!prevA || !prevB) {
+                if (!prevA?.parser || !prevB?.parser) {
                     return false // Starting nodes did not match
                 }
                 // Try to speculatevely walk the path in reverse to find matching nodes
@@ -59,7 +84,7 @@ export default class Parser {
                 let nextB
                 for (
                     nextA = a, nextB = b;
-                    nextA || nextB;
+                    nextA?.parser || nextB?.parser;
                     nextA = nextA?.parent, nextB = nextB?.parent
                 ) {
                     const aMatches = nextA?.parser === prevA.parser
@@ -99,28 +124,35 @@ export default class Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      * @returns {Result<ParserValue<any>>}
      */
-    parse(context, position, path) {
+    parse(context, position, path, index) {
         return null
     }
 
     /** @param {PathNode} path */
-    toString(context = Reply.makeContext(null, ""), indent = 0, path = null) {
-        if (this.isVisited(path)) {
-            return "<...>" // Recursive parser
+    toString(context = Reply.makeContext(null, ""), indentation = "", path = null, index = 0) {
+        path = this.makePath(path, index)
+        const isHighlighted = this.isHighlighted(context, path)
+        let result = this.isVisited(path)
+            ? "<...>" // Recursive parser
+            : this.doToString(context, isHighlighted ? "" : indentation, path, index)
+        if (isHighlighted) {
+            /** @type {String[]} */
+            result = Parser.frame(result, Parser.highlight, indentation)
         }
-        const result = this.doToString(context, indent, path)
         return result
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
+    doToString(context, indentation, path, index) {
         return `${this.constructor.name} does not implement toString()`
     }
 }

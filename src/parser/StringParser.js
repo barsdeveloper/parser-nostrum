@@ -1,5 +1,5 @@
-import Parser from "./Parser.js"
 import Reply from "../Reply.js"
+import Parser from "./Parser.js"
 
 /** @template {String} T */
 export default class StringParser extends Parser {
@@ -19,8 +19,10 @@ export default class StringParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      */
-    parse(context, position, path) {
+    parse(context, position, path, index) {
+        path = this.makePath(path, index)
         const end = position + this.#value.length
         const value = context.input.substring(position, end)
         const result = this.#value === value
@@ -32,17 +34,11 @@ export default class StringParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
-        const inlined = this.value.replaceAll("\n", "\\n")
-        let result = !this.value.match(/^[a-zA-Z]$/)
-            ? `"${inlined.replaceAll('"', '\\"')}"`
-            : inlined
-        if (this.isHighlighted(context, path)) {
-            result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight
-        }
-        return result
+    doToString(context, indentation, path, index) {
+        return `"${this.value.replaceAll("\n", "\\n").replaceAll('"', '\\"')}"`
     }
 }

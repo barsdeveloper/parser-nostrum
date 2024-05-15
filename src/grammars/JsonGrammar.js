@@ -15,7 +15,9 @@ export default class JsonGrammar {
         P.reg(/\[\s*/),
         P.lazy(() => this.json).sepBy(P.reg(/\s*,\s*/)),
         P.reg(/\s*\]/)
-    ).map(([_0, values, _2]) => values)
+    )
+        .map(([_0, values, _2]) => values)
+        .label("Array")
     /** @type {Parsernostrum<Parser>} */
     static #object = P.seq(
         P.reg(/\{\s*/),
@@ -28,7 +30,9 @@ export default class JsonGrammar {
             .sepBy(P.reg(/\s*,\s*/))
             .map(v => v.reduce((acc, cur) => ({ ...acc, ...cur }), ({}))),
         P.reg(/\s*}/)
-    ).map(([_0, object, _2]) => object)
+    )
+        .map(([_0, object, _2]) => object)
+        .label("Object")
 
     static json = P.alt(
         this.#string,

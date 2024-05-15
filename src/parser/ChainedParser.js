@@ -27,10 +27,12 @@ export default class ChainedParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      * @returns {Result<ParserValue<UnwrapParser<ReturnType<C>>>>}
      */
-    parse(context, position, path) {
-        const outcome = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
+    parse(context, position, path, index) {
+        path = this.makePath(path, index)
+        const outcome = this.#parser.parse(context, position, path, 0)
         if (!outcome.status) {
             // @ts-expect-error
             return outcome
@@ -49,26 +51,12 @@ export default class ChainedParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
-        const serialized = "chained<f()>"
-        let result = this.#parser.toString(context, indent, { parent: path, parser: this.#parser, index: 0 })
-        if (this.isHighlighted(context, path)) {
-            result +=
-                " => "
-                + serialized
-                + "\n"
-                // Group 1 is the portion between the last newline and end or the whole text
-                + Parser.indentation.repeat(indent)
-                + " ".repeat(result.match(/(?:\n|^)([^\n]+)$/)?.[1].length + 4)
-                + "^".repeat(serialized.length)
-                + " "
-                + Parser.highlight
-        } else {
-            result = Parser.appendBeforeHighlight(result, " => " + serialized)
-        }
+    doToString(context, indentation, path, index) {
+        const result = this.#parser.toString(context, indentation, path, 0) + " => chained<f()>"
         return result
     }
 }

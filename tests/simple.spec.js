@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import P from "../src/Parsernostrum.js"
 
 test("String alpha", async ({ page }) => {

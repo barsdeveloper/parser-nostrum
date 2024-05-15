@@ -29,12 +29,27 @@ export default class MapParser extends Parser {
 
     /**
      * @param {Context} context
+     * @param {PathNode} path
+     */
+    isHighlighted(context, path) {
+        if (super.isHighlighted(context, path)) {
+            // If MapParser is highlighted, then highlight its child
+            const childrenPath = { parent: path, parser: this.#parser, index: 0 }
+            context.highlighted = context.highlighted instanceof Parser ? this.#parser : childrenPath
+        }
+        return false
+    }
+
+    /**
+     * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      * @returns {Result<P>}
      */
-    parse(context, position, path) {
-        const result = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
+    parse(context, position, path, index) {
+        path = this.makePath(path, index)
+        const result = this.#parser.parse(context, position, path, 0)
         if (result.status) {
             result.value = this.#mapper(result.value)
         }
@@ -44,15 +59,13 @@ export default class MapParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
-        const childrenPath = { parent: path, parser: this.#parser, index: 0 }
-        if (this.isHighlighted(context, path)) {
-            context.highlighted = context.highlighted instanceof Parser ? this.#parser : childrenPath
-        }
-        let result = this.#parser.toString(context, indent, childrenPath)
+    doToString(context, indentation, path, index) {
+        path = this.makePath(path, index)
+        let result = this.#parser.toString(context, indentation, path, 0)
         if (this.#parser instanceof RegExpParser) {
             if (Object.values(RegExpParser.common).includes(this.#parser.regexp)) {
                 if (
@@ -68,8 +81,7 @@ export default class MapParser extends Parser {
         if (serializedMapper.length > 60 || serializedMapper.includes("\n")) {
             serializedMapper = "(...) => { ... }"
         }
-        serializedMapper = ` -> map<${serializedMapper}>`
-        result = Parser.appendBeforeHighlight(result, serializedMapper)
+        result += ` -> map<${serializedMapper}>`
         return result
     }
 }
