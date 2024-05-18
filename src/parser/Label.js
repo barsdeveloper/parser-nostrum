@@ -20,11 +20,6 @@ export default class Label extends Parser {
         this.#label = label
     }
 
-    /** @returns {Parser} */
-    getConcreteParser() {
-        return this.#parser.getConcreteParser()
-    }
-
     /**
      * @param {PathNode} path
      * @param {Number} index

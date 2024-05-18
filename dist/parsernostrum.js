@@ -58,15 +58,6 @@ class Parser {
     Self
 
     /** @param {String} value */
-    static lastRowLength(value, firstRowPadding = 0) {
-        // This regex always matches and group 2 (content of the last row) is always there
-        const match = value.match(/(?:\n|(^))([^\n]*)$/);
-        // Group 1 tells wheter or not it matched the first row (last row is also first row)
-        const additional = match[1] !== undefined ? firstRowPadding : 0;
-        return match[2].length + additional
-    }
-
-    /** @param {String} value */
     static frame(value, label = "", indentation = "") {
         label = value ? "[ " + label + " ]" : "";
         let rows = value.split("\n");
@@ -90,11 +81,6 @@ class Parser {
         return rows.join("\n")
     }
 
-    /** @returns {Parser} */
-    getConcreteParser() {
-        return this
-    }
-
     /**
      * @param {PathNode} path
      * @param {Number} index
@@ -115,41 +101,15 @@ class Parser {
         if (!context.highlighted || !path?.current) {
             return false
         }
-        let a, prevA, b, prevB;
-        loop:
+        let a, b;
         for (
             a = path,
             b = /** @type {PathNode} */(context.highlighted);
             a.current && b.current;
-            prevA = a, a = a.parent,
-            prevB = b, b = b.parent
+            a = a.parent,
+            b = b.parent
         ) {
             if (a.current !== b.current || a.index !== b.index) {
-                if (!prevA?.current || !prevB?.current) {
-                    return false // Starting nodes did not match
-                }
-                // Try to speculatevely walk the path in reverse to find matching nodes
-                let nextA;
-                let nextB;
-                for (
-                    nextA = a, nextB = b;
-                    nextA?.current || nextB?.current;
-                    nextA = nextA?.parent, nextB = nextB?.parent
-                ) {
-                    const aMatches = nextA?.current === prevA.current;
-                    const bMatches = nextB?.current === prevB.current;
-                    if (aMatches || bMatches) {
-                        if (aMatches) {
-                            prevA = nextA;
-                        }
-                        if (bMatches) {
-                            prevB = nextB;
-                        }
-                        a = prevA;
-                        b = prevB;
-                        continue loop
-                    }
-                }
                 return false
             }
         }
@@ -457,11 +417,6 @@ class Label extends Parser {
         this.#label = label;
     }
 
-    /** @returns {Parser} */
-    getConcreteParser() {
-        return this.#parser.getConcreteParser()
-    }
-
     /**
      * @param {PathNode} path
      * @param {Number} index
@@ -507,11 +462,6 @@ class LazyParser extends Parser {
     constructor(parser) {
         super();
         this.#parser = parser;
-    }
-
-    /** @returns {Parser} */
-    getConcreteParser() {
-        return this.resolve().getConcreteParser()
     }
 
     /**
@@ -1290,7 +1240,7 @@ class Parsernostrum {
     /** @param {Parsernostrum<Parser> | Parser | PathNode} highlight */
     toString(indentation = "", newline = false, highlight = null) {
         if (highlight instanceof Parsernostrum) {
-            highlight = highlight.getParser().getConcreteParser();
+            highlight = highlight.getParser();
         }
         const context = Reply.makeContext(this, "");
         context.highlighted = highlight;

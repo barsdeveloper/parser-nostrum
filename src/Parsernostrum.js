@@ -349,7 +349,7 @@ export default class Parsernostrum {
     /** @param {Parsernostrum<Parser> | Parser | PathNode} highlight */
     toString(indentation = "", newline = false, highlight = null) {
         if (highlight instanceof Parsernostrum) {
-            highlight = highlight.getParser().getConcreteParser()
+            highlight = highlight.getParser()
         }
         const context = Reply.makeContext(this, "")
         context.highlighted = highlight

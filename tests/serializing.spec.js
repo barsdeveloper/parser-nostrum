@@ -207,8 +207,8 @@ test("Test Chained", async ({ page }) => {
         └───────────────────────────┘`
     )
     expect(ab4.toString(indentation, true, ab4)).toEqual(`
-        ┌─[ Chain ]─────────────────────┐
-        | ┌─[ Last valid parser ]─────┐ |
+        ┌─[ Last valid parser ]─────────┐
+        | ┌─[ Chain ]─────────────────┐ |
         | | ┌─[ A ]─┐                 | |
         | | | "a"   |                 | |
         | | └───────┘ => chained<f()> | |

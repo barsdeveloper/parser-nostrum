@@ -14,11 +14,6 @@ export default class LazyParser extends Parser {
         this.#parser = parser
     }
 
-    /** @returns {Parser} */
-    getConcreteParser() {
-        return this.resolve().getConcreteParser()
-    }
-
     /**
      * @param {PathNode} path
      * @param {Number} index
