@@ -57,6 +57,7 @@
  *     : T extends [infer First, ...infer Rest] ? [ParserValue<First>, ...ParserValue<Rest>]
  *     : T extends import("./parser/AlternativeParser.js").default<infer P> ? UnionFromArray<ParserValue<P>>
  *     : T extends import("./parser/ChainedParser.js").default<any, infer C> ? ParserValue<UnwrapParser<ReturnType<C>>>
+ *     : T extends import("./parser/Label.js").default<infer T> ? ParserValue<T>
  *     : T extends import("./parser/LazyParser.js").default<infer P> ? ParserValue<P>
  *     : T extends import("./parser/Lookahead.js").default ? ""
  *     : T extends import("./parser/MapParser.js").default<any, infer P> ? P
