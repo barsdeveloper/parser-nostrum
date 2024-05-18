@@ -2,8 +2,8 @@
 
 /**
  * @typedef {{
+ *     current: Parser,
  *     parent: PathNode?,
- *     parser: Parser,
  *     index: Number,
  * }} PathNode
  */

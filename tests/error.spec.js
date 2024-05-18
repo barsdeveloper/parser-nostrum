@@ -158,28 +158,28 @@ test("Test JsonGrammar 2", async ({ page }) => {
     try {
         JsonGrammar.json.parse(`
             {
-            "glossary": {
-                "title": "example glossary",
-                "GlossDiv": {
-                    "title": "S",
-                    "GlossList": {
-                        "GlossEntry": {
-                            "ID": "SGML",
-                            "SortAs": "SGML",
-                            "GlossTerm": "Standard Generalized Markup Language",
-                            "Acronym": "SGML",
-                            "Abbrev": "ISO 8879:1986",
-                            "GlossDef": {
-                                "para": "A meta-markup language, used to create markup languages such as DocBook.",
-                                "GlossSeeAlso": ["GML", "XML"
-                                },
-                            "GlossSee": "markup"
+                "glossary": {
+                    "title": "example glossary",
+                    "GlossDiv": {
+                        "title": "S",
+                        "GlossList": {
+                            "GlossEntry": {
+                                "ID": "SGML",
+                                "SortAs": "SGML",
+                                "GlossTerm": "Standard Generalized Markup Language",
+                                "Acronym": "SGML",
+                                "Abbrev": "ISO 8879:1986",
+                                "GlossDef": {
+                                    "para": "A meta-markup language, used to create markup languages such as DocBook.",
+                                    "GlossSeeAlso": ["GML", "XML"
+                                    },
+                                "GlossSee": "markup"
+                            }
                         }
                     }
                 }
             }
-        }
-            `.trim())
+        `.trim())
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
@@ -187,12 +187,13 @@ test("Test JsonGrammar 2", async ({ page }) => {
         String.raw`Could not parse: { ... "glossary": { ... "title": "example glossary", ... "Gl`,
         String.raw``,
         String.raw`Input: ..."GlossSeeAlso": ["GML", "XML" ... }, ... "GlossSee": "markup...`,
-        String.raw`                                       ^ From here (line: 15, column: 62, offset: 702)`,
+        String.raw`                                       ^ From here (line: 15, column: 66, offset: 758)`,
         String.raw``,
         String.raw`Last valid parser matched:`,
         String.raw`    ALT<`,
-        String.raw`        P.doubleQuotedString`,
-        String.raw`        ^^^^^^^^^^^^^^^^^^^^ Last valid parser`,
+        String.raw`        ┌─[ Last valid parser ]─┐`,
+        String.raw`        | P.doubleQuotedString  |`,
+        String.raw`        └───────────────────────┘`,
         String.raw`        | P.numberExponential`,
         String.raw`        | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐`,
         String.raw`          | SEQ<                                                                       |`,
@@ -240,39 +241,38 @@ test("Test JsonGrammar 3", async ({ page }) => {
     try {
         JsonGrammar.json.parse(`
             {
-            "glossary": {
-                "title": "example glossary",
-                "GlossDiv": {
-                    "title": "S",
-                    "GlossList": {
-                        "GlossEntry": {
-                            "ID": "SGML",
-                            "SortAs": "SGML",
-                            "GlossTerm": "Standard Generalized Markup Language",
-                            "Acronym": "SGML",
-                            "Abbrev": "ISO 8879:1986",
-                            "GlossDef": {
-                                "para": "A meta-markup language, used to create markup languages such as DocBook.",
-                                "GlossSeeAlso": ["GML", "XML"]
-                            },
-                            "GlossSee": "markup"
+                "glossary": {
+                    "title": "example glossary",
+                    "GlossDiv": {
+                        "title": "S",
+                        "GlossList": {
+                            "GlossEntry": {
+                                "ID": "SGML",
+                                "SortAs": "SGML",
+                                "GlossTerm": "Standard Generalized Markup Language",
+                                "Acronym": "SGML",
+                                "Abbrev": "ISO 8879:1986",
+                                "GlossDef": {
+                                    "para": "A meta-markup language, used to create markup languages such as DocBook.",
+                                    "GlossSeeAlso": ["GML", "XML"]
+                                },
+                                "GlossSee": "markup"
+                            }
                         }
                     }
                 }
-            }
-                `.trim())
+        `.trim()) // top brace is not closed
     } catch (e) {
         error = /** @type {Error} */(e).message
     } expect(error).toEqual([
         String.raw`Could not parse: { ... "glossary": { ... "title": "example glossary", ... "Gl`,
         String.raw``,
-        String.raw`Input: .... } ... } ... }`,
-        String.raw`                         ^ From here (line: 21, column: 14, offset: 863), end of string`,
+        String.raw`Input: ...} ... } ... } ... }`,
+        String.raw`                             ^ From here (line: 21, column: 18, offset: 943), end of string`,
         String.raw``,
         String.raw`Last valid parser matched:`,
         String.raw`    ALT<`,
         String.raw`        P.doubleQuotedString`,
-        String.raw`        ^^^^^^^^^^^^^^^^^^^^ Last valid parser`,
         String.raw`        | P.numberExponential`,
         String.raw`        | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐`,
         String.raw`          | SEQ<                                                                       |`,
@@ -292,7 +292,9 @@ test("Test JsonGrammar 3", async ({ page }) => {
         String.raw`          |             > -> map<(...) => { ... }>                                     |`,
         String.raw`          |         > -> map<([_, v]) => v>*                                           |`,
         String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> |`,
-        String.raw`          |     /\s*}/                                                                 |`,
+        String.raw`          |     ┌─[ Last valid parser ]─┐                                              |`,
+        String.raw`          |     | /\s*}/                |                                              |`,
+        String.raw`          |     └───────────────────────┘                                              |`,
         String.raw`          | > -> map<([_0, object, _2]) => object>                                     |`,
         String.raw`          └────────────────────────────────────────────────────────────────────────────┘`,
         String.raw`        | ┌─[ Array ]─────────────────────────────────────────┐`,

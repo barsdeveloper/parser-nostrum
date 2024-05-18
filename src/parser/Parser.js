@@ -52,7 +52,7 @@ export default class Parser {
      * @returns {PathNode}
      */
     makePath(path, index) {
-        return { parent: path, parser: this, index }
+        return { current: this, parent: path, index }
     }
 
     /**
@@ -63,7 +63,7 @@ export default class Parser {
         if (context.highlighted instanceof Parser) {
             return context.highlighted === this
         }
-        if (!context.highlighted || !path?.parser) {
+        if (!context.highlighted || !path?.current) {
             return false
         }
         let a, prevA, b, prevB
@@ -71,12 +71,12 @@ export default class Parser {
         for (
             a = path,
             b = /** @type {PathNode} */(context.highlighted);
-            a.parser && b.parser;
+            a.current && b.current;
             prevA = a, a = a.parent,
             prevB = b, b = b.parent
         ) {
-            if (a.parser !== b.parser || a.index !== b.index) {
-                if (!prevA?.parser || !prevB?.parser) {
+            if (a.current !== b.current || a.index !== b.index) {
+                if (!prevA?.current || !prevB?.current) {
                     return false // Starting nodes did not match
                 }
                 // Try to speculatevely walk the path in reverse to find matching nodes
@@ -84,11 +84,11 @@ export default class Parser {
                 let nextB
                 for (
                     nextA = a, nextB = b;
-                    nextA?.parser || nextB?.parser;
+                    nextA?.current || nextB?.current;
                     nextA = nextA?.parent, nextB = nextB?.parent
                 ) {
-                    const aMatches = nextA?.parser === prevA.parser
-                    const bMatches = nextB?.parser === prevB.parser
+                    const aMatches = nextA?.current === prevA.current
+                    const bMatches = nextB?.current === prevB.current
                     if (aMatches || bMatches) {
                         if (aMatches) {
                             prevA = nextA
@@ -104,7 +104,7 @@ export default class Parser {
                 return false
             }
         }
-        return true
+        return !a.current && !b.current
     }
 
     /** @param {PathNode?} path */
@@ -113,7 +113,7 @@ export default class Parser {
             return false
         }
         for (path = path.parent; path != null; path = path.parent) {
-            if (path.parser === this) {
+            if (path.current === this) {
                 return true
             }
         }
@@ -134,10 +134,12 @@ export default class Parser {
     /** @param {PathNode} path */
     toString(context = Reply.makeContext(null, ""), indentation = "", path = null, index = 0) {
         path = this.makePath(path, index)
+        if (this.isVisited(path)) {
+            return "<...>"
+        }
+        const isVisited = this.isVisited(path)
         const isHighlighted = this.isHighlighted(context, path)
-        let result = this.isVisited(path)
-            ? "<...>" // Recursive parser
-            : this.doToString(context, isHighlighted ? "" : indentation, path, index)
+        let result = isVisited ? "<...>" : this.doToString(context, isHighlighted ? "" : indentation, path, index)
         if (isHighlighted) {
             /** @type {String[]} */
             result = Parser.frame(result, Parser.highlight, indentation)

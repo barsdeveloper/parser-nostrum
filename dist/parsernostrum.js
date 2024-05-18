@@ -43,7 +43,7 @@ class Reply {
     static makePathNode(parser, index = 0, previous = null) {
         return /** @type {PathNode} */({
             parent: previous,
-            parser,
+            current: parser,
             index,
         })
     }
@@ -101,7 +101,7 @@ class Parser {
      * @returns {PathNode}
      */
     makePath(path, index) {
-        return { parent: path, parser: this, index }
+        return { current: this, parent: path, index }
     }
 
     /**
@@ -112,7 +112,7 @@ class Parser {
         if (context.highlighted instanceof Parser) {
             return context.highlighted === this
         }
-        if (!context.highlighted || !path?.parser) {
+        if (!context.highlighted || !path?.current) {
             return false
         }
         let a, prevA, b, prevB;
@@ -120,12 +120,12 @@ class Parser {
         for (
             a = path,
             b = /** @type {PathNode} */(context.highlighted);
-            a.parser && b.parser;
+            a.current && b.current;
             prevA = a, a = a.parent,
             prevB = b, b = b.parent
         ) {
-            if (a.parser !== b.parser || a.index !== b.index) {
-                if (!prevA?.parser || !prevB?.parser) {
+            if (a.current !== b.current || a.index !== b.index) {
+                if (!prevA?.current || !prevB?.current) {
                     return false // Starting nodes did not match
                 }
                 // Try to speculatevely walk the path in reverse to find matching nodes
@@ -133,11 +133,11 @@ class Parser {
                 let nextB;
                 for (
                     nextA = a, nextB = b;
-                    nextA?.parser || nextB?.parser;
+                    nextA?.current || nextB?.current;
                     nextA = nextA?.parent, nextB = nextB?.parent
                 ) {
-                    const aMatches = nextA?.parser === prevA.parser;
-                    const bMatches = nextB?.parser === prevB.parser;
+                    const aMatches = nextA?.current === prevA.current;
+                    const bMatches = nextB?.current === prevB.current;
                     if (aMatches || bMatches) {
                         if (aMatches) {
                             prevA = nextA;
@@ -153,7 +153,7 @@ class Parser {
                 return false
             }
         }
-        return true
+        return !a.current && !b.current
     }
 
     /** @param {PathNode?} path */
@@ -162,7 +162,7 @@ class Parser {
             return false
         }
         for (path = path.parent; path != null; path = path.parent) {
-            if (path.parser === this) {
+            if (path.current === this) {
                 return true
             }
         }
@@ -183,10 +183,12 @@ class Parser {
     /** @param {PathNode} path */
     toString(context = Reply.makeContext(null, ""), indentation = "", path = null, index = 0) {
         path = this.makePath(path, index);
+        if (this.isVisited(path)) {
+            return "<...>"
+        }
+        const isVisited = this.isVisited(path);
         const isHighlighted = this.isHighlighted(context, path);
-        let result = this.isVisited(path)
-            ? "<...>" // Recursive parser
-            : this.doToString(context, isHighlighted ? "" : indentation, path, index);
+        let result = isVisited ? "<...>" : this.doToString(context, isHighlighted ? "" : indentation, path, index);
         if (isHighlighted) {
             /** @type {String[]} */
             result = Parser.frame(result, Parser.highlight, indentation);
@@ -768,7 +770,6 @@ class MapParser extends Parser {
      * @param {Number} index
      */
     doToString(context, indentation, path, index) {
-        path = this.makePath(path, index);
         let result = this.#parser.toString(context, indentation, path, 0);
         if (this.#parser instanceof RegExpParser) {
             if (Object.values(RegExpParser.common).includes(this.#parser.regexp)) {
@@ -1035,6 +1036,34 @@ class Parsernostrum {
         this.#parser = parser;
     }
 
+    /** @param {PathNode} path */
+    static #simplifyPath(path) {
+        /** @type {PathNode[]} */
+        const array = [];
+        while (path) {
+            array.push(path);
+            path = path.parent;
+        }
+        array.reverse();
+        /** @type {Map<Parser, Number>} */
+        let visited = new Map();
+        for (let i = 1; i < array.length; ++i) {
+            const existing = visited.get(array[i].current);
+            if (existing !== undefined) {
+                if (array[i + 1]) {
+                    array[i + 1].parent = array[existing];
+                }
+                visited = new Map([...visited.entries()].filter(([parser, index]) => index <= existing || index > i));
+                visited.set(array[i].current, existing);
+                array.splice(existing + 1, i - existing);
+                i = existing;
+            } else {
+                visited.set(array[i].current, i);
+            }
+        }
+        return array[array.length - 1]
+    }
+
     getParser() {
         return this.#parser
     }
@@ -1096,12 +1125,14 @@ class Parsernostrum {
         if (chunkRange[1] < inlineInput.length - 1) {
             segment = segment + "...";
         }
-        const bestParser = this.toString(Parser.indentation, true, result.bestParser);
+        const bestParser = this.toString(Parser.indentation, true, Parsernostrum.#simplifyPath(result.bestParser));
         throw new Error(
             `Could not parse: ${string}\n\n`
             + `Input: ${segment}\n`
             + "       " + " ".repeat(offset)
-            + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
+            + `^ From here (line: ${position.line}, `
+            + `column: ${position.column}, `
+            + `offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
             + (result.bestParser ? "Last valid parser matched:" : "No parser matched:")
             + bestParser
             + "\n"

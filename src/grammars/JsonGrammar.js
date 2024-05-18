@@ -43,5 +43,4 @@ export default class JsonGrammar {
         this.#false,
         this.#null,
     )
-
 }

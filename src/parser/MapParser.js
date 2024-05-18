@@ -64,7 +64,6 @@ export default class MapParser extends Parser {
      * @param {Number} index
      */
     doToString(context, indentation, path, index) {
-        path = this.makePath(path, index)
         let result = this.#parser.toString(context, indentation, path, 0)
         if (this.#parser instanceof RegExpParser) {
             if (Object.values(RegExpParser.common).includes(this.#parser.regexp)) {

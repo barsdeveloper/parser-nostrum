@@ -95,6 +95,34 @@ export default class Parsernostrum {
         this.#parser = parser
     }
 
+    /** @param {PathNode} path */
+    static #simplifyPath(path) {
+        /** @type {PathNode[]} */
+        const array = []
+        while (path) {
+            array.push(path)
+            path = path.parent
+        }
+        array.reverse()
+        /** @type {Map<Parser, Number>} */
+        let visited = new Map()
+        for (let i = 1; i < array.length; ++i) {
+            const existing = visited.get(array[i].current)
+            if (existing !== undefined) {
+                if (array[i + 1]) {
+                    array[i + 1].parent = array[existing]
+                }
+                visited = new Map([...visited.entries()].filter(([parser, index]) => index <= existing || index > i))
+                visited.set(array[i].current, existing)
+                array.splice(existing + 1, i - existing)
+                i = existing
+            } else {
+                visited.set(array[i].current, i)
+            }
+        }
+        return array[array.length - 1]
+    }
+
     getParser() {
         return this.#parser
     }
@@ -156,12 +184,14 @@ export default class Parsernostrum {
         if (chunkRange[1] < inlineInput.length - 1) {
             segment = segment + "..."
         }
-        const bestParser = this.toString(Parser.indentation, true, result.bestParser)
+        const bestParser = this.toString(Parser.indentation, true, Parsernostrum.#simplifyPath(result.bestParser))
         throw new Error(
             `Could not parse: ${string}\n\n`
             + `Input: ${segment}\n`
             + "       " + " ".repeat(offset)
-            + `^ From here (line: ${position.line}, column: ${position.column}, offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
+            + `^ From here (line: ${position.line}, `
+            + `column: ${position.column}, `
+            + `offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
             + (result.bestParser ? "Last valid parser matched:" : "No parser matched:")
             + bestParser
             + "\n"
