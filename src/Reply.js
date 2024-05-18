@@ -43,7 +43,7 @@ export default class Reply {
     static makePathNode(parser, index = 0, previous = null) {
         return /** @type {PathNode} */({
             parent: previous,
-            parser,
+            current: parser,
             index,
         })
     }

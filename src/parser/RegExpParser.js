@@ -1,5 +1,5 @@
-import Parser from "./Parser.js"
 import Reply from "../Reply.js"
+import Parser from "./Parser.js"
 
 /** @template T */
 export default class RegExpParser extends Parser {
@@ -48,8 +48,10 @@ export default class RegExpParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      */
-    parse(context, position, path) {
+    parse(context, position, path, index) {
+        path = this.makePath(path, index)
         const match = this.#anchoredRegexp.exec(context.input.substring(position))
         if (match) {
             position += match[0].length
@@ -63,19 +65,15 @@ export default class RegExpParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
+    doToString(context, indentation, path, index) {
         let result = "/" + this.#regexp.source + "/"
-        const shortname = Object
-            .entries(RegExpParser.common)
-            .find(([k, v]) => v.source === this.#regexp.source)?.[0]
+        const shortname = Object.entries(RegExpParser.common).find(([k, v]) => v.source === this.#regexp.source)?.[0]
         if (shortname) {
             result = "P." + shortname
-        }
-        if (this.isHighlighted(context, path)) {
-            result += "\n" + Parser.indentation.repeat(indent) + "^".repeat(result.length) + " " + Parser.highlight
         }
         return result
     }

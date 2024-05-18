@@ -1,5 +1,5 @@
-import Parser from "./Parser.js"
 import Reply from "../Reply.js"
+import Parser from "./Parser.js"
 
 /** @template {Parser} T */
 export default class Lookahead extends Parser {
@@ -39,9 +39,11 @@ export default class Lookahead extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      */
-    parse(context, position, path) {
-        let result = this.#parser.parse(context, position, { parent: path, parser: this.#parser, index: 0 })
+    parse(context, position, path, index) {
+        path = this.makePath(path, index)
+        let result = this.#parser.parse(context, position, path, 0)
         result = result.status == (this.#type === Lookahead.Type.POSITIVE_AHEAD)
             ? Reply.makeSuccess(position, "", path, position)
             : Reply.makeFailure()
@@ -51,25 +53,11 @@ export default class Lookahead extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
-        let result = "("
-            + this.#type
-            + this.#parser.toString(context, indent, { parent: path, parser: this.#parser, index: 0 })
-            + ")"
-        if (this.isHighlighted(context, path)) {
-            result = result.replace(
-                /(\n)|$/,
-                "\n"
-                + Parser.indentation.repeat(indent)
-                + "^".repeat(this.#type.length + 1)
-                + " "
-                + Parser.highlight
-                + "$1"
-            )
-        }
-        return result
+    doToString(context, indentation, path, index) {
+        return "(" + this.#type + this.#parser.toString(context, indentation, path, 0) + ")"
     }
 }

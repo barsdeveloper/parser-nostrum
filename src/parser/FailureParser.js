@@ -1,5 +1,5 @@
-import Parser from "./Parser.js"
 import Reply from "../Reply.js"
+import Parser from "./Parser.js"
 
 export default class FailureParser extends Parser {
 
@@ -9,23 +9,20 @@ export default class FailureParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      */
-    parse(context, position, path) {
+    parse(context, position, path, index) {
         return Reply.makeFailure()
     }
 
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
-        const result = "<FAILURE>" + (
-            this.isHighlighted(context, path)
-                ? `\n${Parser.indentation.repeat(indent)}^^^^^^^^^ ${Parser.highlight}`
-                : ""
-        )
-        return result
+    doToString(context, indentation, path, index) {
+        return "<FAILURE>"
     }
 }

@@ -1,16 +1,10 @@
-import Parser from "./Parser.js"
 import Reply from "../Reply.js"
+import Parser from "./Parser.js"
 import StringParser from "./StringParser.js"
 import SuccessParser from "./SuccessParser.js"
 
 /** @template {Parser[]} T */
 export default class AlternativeParser extends Parser {
-
-    static highlightRegexp = new RegExp(
-        // Matches the beginning of a row containing Parser.highlight only when after the first row of an alternative
-        String.raw`(?<=[^\S\n]*\| .*\n)^(?=[^\S\n]*\^+ ${Parser.highlight}(?:\n|$))`,
-        "m"
-    )
 
     #parsers
     get parsers() {
@@ -27,15 +21,13 @@ export default class AlternativeParser extends Parser {
      * @param {Context} context
      * @param {Number} position
      * @param {PathNode} path
+     * @param {Number} index
      */
-    parse(context, position, path) {
+    parse(context, position, path, index) {
+        path = this.makePath(path, index)
         const result = Reply.makeSuccess(0, /** @type {ParserValue<T>} */(""))
         for (let i = 0; i < this.#parsers.length; ++i) {
-            const outcome = this.#parsers[i].parse(
-                context,
-                position,
-                { parent: path, parser: this.#parsers[i], index: i }
-            )
+            const outcome = this.#parsers[i].parse(context, position, path, i)
             if (outcome.bestPosition > result.bestPosition) {
                 result.bestParser = outcome.bestParser
                 result.bestPosition = outcome.bestPosition
@@ -54,33 +46,31 @@ export default class AlternativeParser extends Parser {
     /**
      * @protected
      * @param {Context} context
-     * @param {Number} indent
+     * @param {String} indentation
      * @param {PathNode} path
+     * @param {Number} index
      */
-    doToString(context, indent, path) {
-        const indentation = Parser.indentation.repeat(indent)
-        const deeperIndentation = Parser.indentation.repeat(indent + 1)
+    doToString(context, indentation, path, index) {
+        // Short syntax for optional parser
         if (this.#parsers.length === 2 && this.#parsers[1] instanceof SuccessParser) {
-            let result = this.#parsers[0].toString(
-                context,
-                indent,
-                { parent: path, parser: this.#parsers[0], index: 0 }
-            )
+            let result = this.#parsers[0].toString(context, indentation, path, 0)
             if (!(this.#parsers[0] instanceof StringParser)) {
                 result = "<" + result + ">"
             }
             result += "?"
             return result
         }
-        let serialized = this.#parsers
-            .map((parser, index) => parser.toString(context, indent + 1, { parent: path, parser, index }))
-            .join("\n" + deeperIndentation + "| ")
-        if (context.highlighted) {
-            serialized = serialized.replace(AlternativeParser.highlightRegexp, "  ")
-        }
+        const deeperIndentation = indentation + Parser.indentation
         let result = "ALT<\n"
-            + (this.isHighlighted(context, path) ? `${indentation}^^^ ${Parser.highlight}\n` : "")
-            + deeperIndentation + serialized
+            + deeperIndentation
+            + this.#parsers
+                .map((parser, i) => parser.toString(
+                    context,
+                    deeperIndentation + " ".repeat(i === 0 ? 0 : Parser.indentation.length - 2),
+                    path,
+                    i,
+                ))
+                .join("\n" + deeperIndentation + "| ")
             + "\n" + indentation + ">"
         return result
     }

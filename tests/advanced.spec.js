@@ -1,8 +1,8 @@
-import { test, expect } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import httpServer from "http-server"
+import P from "../src/Parsernostrum.js"
 import JsonGrammar from "../src/grammars/JsonGrammar.js"
 import MathGrammar from "../src/grammars/MathGrammar.js"
-import P from "../src/Parsernostrum.js"
 import sample1 from "./sample1.js"
 import sample2 from "./sample2.js"
 
