@@ -8,7 +8,7 @@ Parsernostrum is a small non backtracking LL parsing combinator library for Java
 npm install parsernostrum
 ```
 
-Import Parsernostrum and use it to create custom parsers tailored to your specific parsing needs. Then use the following methods to parse a astring.
+Import Parsernostrum and use it to create custom parsers tailored to your specific parsing needs. Then use the following methods to parse a string.
 
 ```JavaScript
 import P from "parsernostrum"
@@ -146,7 +146,7 @@ myParser.map(n => `Number: ${n}`)
 ```
 
 ### `.chain(fn)`
-Chains the output of one parser to another parser (usefull to decide at runtime how to continue parsing).
+Chains the output of one parser to another parser (useful to decide at runtime how to continue parsing).
 ```JavaScript
 const p = P.reg(/[([{]/).chain(v => (
     {
@@ -169,8 +169,14 @@ Joins the results of a parser into a single string.
 myParser.join(", ")
 ```
 
+### `.label(name)`
+Label the parser for better error messages in case of parse failure.
+```JavaScript
+myParser.label("My parser")
+```
+
 ### Predefined parsers
-Some usefull parsers that can be reused and combined with other parsers.
+Some useful parsers that can be reused and combined with other parsers.
 - `number`: the most common numbers, possibly fractional and signed
 - `numberInteger`: possibly signed integer
 - `numberBigInteger`: same as numberInteger but returns a BigInt JavaScript object
@@ -178,8 +184,8 @@ Some usefull parsers that can be reused and combined with other parsers.
 - `numberNatural`: just digits
 - `numberUnit`: a number between 0 and 1
 - `numberByte`: a integer between 0 and 255
-- `whitespace`: any whitespace (/\s+/)
-- `whitespaceOpt`: any optional whitespace (/\s*/)
+- `whitespace`: any whitespace (`/\s+/`)
+- `whitespaceOpt`: any optional whitespace (`/\s*/`)
 - `whitespaceInline`: whitespace on a single line
 - `whitespaceInlineOpt`: optional whitespace on a single line
 - `whitespaceMultiline`: whitespace that containes at least a newline
