@@ -42,5 +42,5 @@ export default class JsonGrammar {
         this.#true,
         this.#false,
         this.#null,
-    )
+    ).label("Json")
 }

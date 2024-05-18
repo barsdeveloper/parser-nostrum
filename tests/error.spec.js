@@ -107,50 +107,61 @@ test("Test JsonGrammar 1", async ({ page }) => {
         String.raw`                     ^ From here (line: 12, column: 44, offset: 511)`,
         String.raw``,
         String.raw`Last valid parser matched:`,
-        String.raw`    ALT<`,
-        String.raw`        P.doubleQuotedString`,
-        String.raw`        | P.numberExponential`,
-        String.raw`        | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐`,
-        String.raw`          | SEQ<                                                                       |`,
-        String.raw`          |     /\{\s*/                                                                |`,
-        String.raw`          |     SEQ<                                                                   |`,
-        String.raw`          |         SEQ<                                                               |`,
-        String.raw`          |             P.doubleQuotedString                                           |`,
-        String.raw`          |             /\s*:\s*/                                                      |`,
-        String.raw`          |             <...>                                                          |`,
-        String.raw`          |         > -> map<(...) => { ... }>                                         |`,
-        String.raw`          |         SEQ<                                                               |`,
-        String.raw`          |             /\s*,\s*/                                                      |`,
-        String.raw`          |             SEQ<                                                           |`,
-        String.raw`          |                 P.doubleQuotedString                                       |`,
-        String.raw`          |                 /\s*:\s*/                                                  |`,
-        String.raw`          |                 <...>                                                      |`,
-        String.raw`          |             > -> map<(...) => { ... }>                                     |`,
-        String.raw`          |         > -> map<([_, v]) => v>*                                           |`,
-        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> |`,
-        String.raw`          |     /\s*}/                                                                 |`,
-        String.raw`          | > -> map<([_0, object, _2]) => object>                                     |`,
-        String.raw`          └────────────────────────────────────────────────────────────────────────────┘`,
-        String.raw`        | ┌─[ Array ]─────────────────────────────────────────┐`,
-        String.raw`          | SEQ<                                              |`,
-        String.raw`          |     ┌─[ Last valid parser ]─┐                     |`,
-        String.raw`          |     | /\[\s*/               |                     |`,
-        String.raw`          |     └───────────────────────┘                     |`,
-        String.raw`          |     SEQ<                                          |`,
-        String.raw`          |         <...>                                     |`,
-        String.raw`          |         SEQ<                                      |`,
-        String.raw`          |             /\s*,\s*/                             |`,
-        String.raw`          |             <...>                                 |`,
-        String.raw`          |         > -> map<([_, v]) => v>*                  |`,
-        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> |`,
-        String.raw`          |     /\s*\]/                                       |`,
-        String.raw`          | > -> map<([_0, values, _2]) => values>            |`,
-        String.raw`          └───────────────────────────────────────────────────┘`,
-        String.raw`        | "true" -> map<() => true>`,
-        String.raw`        | "false" -> map<() => false>`,
-        String.raw`        | "null" -> map<() => null>`,
-        String.raw`    >`,
-    ].map(v => v + "\n").join(""))
+        String.raw`    ┌─[ Json ]─────────────────────────────────────────────────────────────────────────────┐`,
+        String.raw`    | ALT<                                                                                 |`,
+        String.raw`    |     P.doubleQuotedString                                                             |`,
+        String.raw`    |     | P.numberExponential                                                            |`,
+        String.raw`    |     | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐ |`,
+        String.raw`    |       | SEQ<                                                                       | |`,
+        String.raw`    |       |     /\{\s*/                                                                | |`,
+        String.raw`    |       |     SEQ<                                                                   | |`,
+        String.raw`    |       |         SEQ<                                                               | |`,
+        String.raw`    |       |             P.doubleQuotedString                                           | |`,
+        String.raw`    |       |             /\s*:\s*/                                                      | |`,
+        String.raw`    |       |             ┌─[ Json ]─┐                                                   | |`,
+        String.raw`    |       |             | <...>    |                                                   | |`,
+        String.raw`    |       |             └──────────┘                                                   | |`,
+        String.raw`    |       |         > -> map<(...) => { ... }>                                         | |`,
+        String.raw`    |       |         SEQ<                                                               | |`,
+        String.raw`    |       |             /\s*,\s*/                                                      | |`,
+        String.raw`    |       |             SEQ<                                                           | |`,
+        String.raw`    |       |                 P.doubleQuotedString                                       | |`,
+        String.raw`    |       |                 /\s*:\s*/                                                  | |`,
+        String.raw`    |       |                 ┌─[ Json ]─┐                                               | |`,
+        String.raw`    |       |                 | <...>    |                                               | |`,
+        String.raw`    |       |                 └──────────┘                                               | |`,
+        String.raw`    |       |             > -> map<(...) => { ... }>                                     | |`,
+        String.raw`    |       |         > -> map<([_, v]) => v>*                                           | |`,
+        String.raw`    |       |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> | |`,
+        String.raw`    |       |     /\s*}/                                                                 | |`,
+        String.raw`    |       | > -> map<([_0, object, _2]) => object>                                     | |`,
+        String.raw`    |       └────────────────────────────────────────────────────────────────────────────┘ |`,
+        String.raw`    |     | ┌─[ Array ]─────────────────────────────────────────┐                          |`,
+        String.raw`    |       | SEQ<                                              |                          |`,
+        String.raw`    |       |     ┌─[ Last valid parser ]─┐                     |                          |`,
+        String.raw`    |       |     | /\[\s*/               |                     |                          |`,
+        String.raw`    |       |     └───────────────────────┘                     |                          |`,
+        String.raw`    |       |     SEQ<                                          |                          |`,
+        String.raw`    |       |         ┌─[ Json ]─┐                              |                          |`,
+        String.raw`    |       |         | <...>    |                              |                          |`,
+        String.raw`    |       |         └──────────┘                              |                          |`,
+        String.raw`    |       |         SEQ<                                      |                          |`,
+        String.raw`    |       |             /\s*,\s*/                             |                          |`,
+        String.raw`    |       |             ┌─[ Json ]─┐                          |                          |`,
+        String.raw`    |       |             | <...>    |                          |                          |`,
+        String.raw`    |       |             └──────────┘                          |                          |`,
+        String.raw`    |       |         > -> map<([_, v]) => v>*                  |                          |`,
+        String.raw`    |       |     > -> map<([first, rest]) => [first, ...rest]> |                          |`,
+        String.raw`    |       |     /\s*\]/                                       |                          |`,
+        String.raw`    |       | > -> map<([_0, values, _2]) => values>            |                          |`,
+        String.raw`    |       └───────────────────────────────────────────────────┘                          |`,
+        String.raw`    |     | "true" -> map<() => true>                                                      |`,
+        String.raw`    |     | "false" -> map<() => false>                                                    |`,
+        String.raw`    |     | "null" -> map<() => null>                                                      |`,
+        String.raw`    | >                                                                                    |`,
+        String.raw`    └──────────────────────────────────────────────────────────────────────────────────────┘`,
+        String.raw``,
+    ].join("\n"))
 })
 
 test("Test JsonGrammar 2", async ({ page }) => {
@@ -190,50 +201,61 @@ test("Test JsonGrammar 2", async ({ page }) => {
         String.raw`                                       ^ From here (line: 15, column: 66, offset: 758)`,
         String.raw``,
         String.raw`Last valid parser matched:`,
-        String.raw`    ALT<`,
-        String.raw`        ┌─[ Last valid parser ]─┐`,
-        String.raw`        | P.doubleQuotedString  |`,
-        String.raw`        └───────────────────────┘`,
-        String.raw`        | P.numberExponential`,
-        String.raw`        | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐`,
-        String.raw`          | SEQ<                                                                       |`,
-        String.raw`          |     /\{\s*/                                                                |`,
-        String.raw`          |     SEQ<                                                                   |`,
-        String.raw`          |         SEQ<                                                               |`,
-        String.raw`          |             P.doubleQuotedString                                           |`,
-        String.raw`          |             /\s*:\s*/                                                      |`,
-        String.raw`          |             <...>                                                          |`,
-        String.raw`          |         > -> map<(...) => { ... }>                                         |`,
-        String.raw`          |         SEQ<                                                               |`,
-        String.raw`          |             /\s*,\s*/                                                      |`,
-        String.raw`          |             SEQ<                                                           |`,
-        String.raw`          |                 P.doubleQuotedString                                       |`,
-        String.raw`          |                 /\s*:\s*/                                                  |`,
-        String.raw`          |                 <...>                                                      |`,
-        String.raw`          |             > -> map<(...) => { ... }>                                     |`,
-        String.raw`          |         > -> map<([_, v]) => v>*                                           |`,
-        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> |`,
-        String.raw`          |     /\s*}/                                                                 |`,
-        String.raw`          | > -> map<([_0, object, _2]) => object>                                     |`,
-        String.raw`          └────────────────────────────────────────────────────────────────────────────┘`,
-        String.raw`        | ┌─[ Array ]─────────────────────────────────────────┐`,
-        String.raw`          | SEQ<                                              |`,
-        String.raw`          |     /\[\s*/                                       |`,
-        String.raw`          |     SEQ<                                          |`,
-        String.raw`          |         <...>                                     |`,
-        String.raw`          |         SEQ<                                      |`,
-        String.raw`          |             /\s*,\s*/                             |`,
-        String.raw`          |             <...>                                 |`,
-        String.raw`          |         > -> map<([_, v]) => v>*                  |`,
-        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> |`,
-        String.raw`          |     /\s*\]/                                       |`,
-        String.raw`          | > -> map<([_0, values, _2]) => values>            |`,
-        String.raw`          └───────────────────────────────────────────────────┘`,
-        String.raw`        | "true" -> map<() => true>`,
-        String.raw`        | "false" -> map<() => false>`,
-        String.raw`        | "null" -> map<() => null>`,
-        String.raw`    >`,
-    ].map(v => v + "\n").join(""))
+        String.raw`    ┌─[ Json ]─────────────────────────────────────────────────────────────────────────────┐`,
+        String.raw`    | ALT<                                                                                 |`,
+        String.raw`    |     ┌─[ Last valid parser ]─┐                                                        |`,
+        String.raw`    |     | P.doubleQuotedString  |                                                        |`,
+        String.raw`    |     └───────────────────────┘                                                        |`,
+        String.raw`    |     | P.numberExponential                                                            |`,
+        String.raw`    |     | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐ |`,
+        String.raw`    |       | SEQ<                                                                       | |`,
+        String.raw`    |       |     /\{\s*/                                                                | |`,
+        String.raw`    |       |     SEQ<                                                                   | |`,
+        String.raw`    |       |         SEQ<                                                               | |`,
+        String.raw`    |       |             P.doubleQuotedString                                           | |`,
+        String.raw`    |       |             /\s*:\s*/                                                      | |`,
+        String.raw`    |       |             ┌─[ Json ]─┐                                                   | |`,
+        String.raw`    |       |             | <...>    |                                                   | |`,
+        String.raw`    |       |             └──────────┘                                                   | |`,
+        String.raw`    |       |         > -> map<(...) => { ... }>                                         | |`,
+        String.raw`    |       |         SEQ<                                                               | |`,
+        String.raw`    |       |             /\s*,\s*/                                                      | |`,
+        String.raw`    |       |             SEQ<                                                           | |`,
+        String.raw`    |       |                 P.doubleQuotedString                                       | |`,
+        String.raw`    |       |                 /\s*:\s*/                                                  | |`,
+        String.raw`    |       |                 ┌─[ Json ]─┐                                               | |`,
+        String.raw`    |       |                 | <...>    |                                               | |`,
+        String.raw`    |       |                 └──────────┘                                               | |`,
+        String.raw`    |       |             > -> map<(...) => { ... }>                                     | |`,
+        String.raw`    |       |         > -> map<([_, v]) => v>*                                           | |`,
+        String.raw`    |       |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> | |`,
+        String.raw`    |       |     /\s*}/                                                                 | |`,
+        String.raw`    |       | > -> map<([_0, object, _2]) => object>                                     | |`,
+        String.raw`    |       └────────────────────────────────────────────────────────────────────────────┘ |`,
+        String.raw`    |     | ┌─[ Array ]─────────────────────────────────────────┐                          |`,
+        String.raw`    |       | SEQ<                                              |                          |`,
+        String.raw`    |       |     /\[\s*/                                       |                          |`,
+        String.raw`    |       |     SEQ<                                          |                          |`,
+        String.raw`    |       |         ┌─[ Json ]─┐                              |                          |`,
+        String.raw`    |       |         | <...>    |                              |                          |`,
+        String.raw`    |       |         └──────────┘                              |                          |`,
+        String.raw`    |       |         SEQ<                                      |                          |`,
+        String.raw`    |       |             /\s*,\s*/                             |                          |`,
+        String.raw`    |       |             ┌─[ Json ]─┐                          |                          |`,
+        String.raw`    |       |             | <...>    |                          |                          |`,
+        String.raw`    |       |             └──────────┘                          |                          |`,
+        String.raw`    |       |         > -> map<([_, v]) => v>*                  |                          |`,
+        String.raw`    |       |     > -> map<([first, rest]) => [first, ...rest]> |                          |`,
+        String.raw`    |       |     /\s*\]/                                       |                          |`,
+        String.raw`    |       | > -> map<([_0, values, _2]) => values>            |                          |`,
+        String.raw`    |       └───────────────────────────────────────────────────┘                          |`,
+        String.raw`    |     | "true" -> map<() => true>                                                      |`,
+        String.raw`    |     | "false" -> map<() => false>                                                    |`,
+        String.raw`    |     | "null" -> map<() => null>                                                      |`,
+        String.raw`    | >                                                                                    |`,
+        String.raw`    └──────────────────────────────────────────────────────────────────────────────────────┘`,
+        String.raw``,
+    ].join("\n"))
 })
 
 test("Test JsonGrammar 3", async ({ page }) => {
@@ -271,50 +293,61 @@ test("Test JsonGrammar 3", async ({ page }) => {
         String.raw`                             ^ From here (line: 21, column: 18, offset: 943), end of string`,
         String.raw``,
         String.raw`Last valid parser matched:`,
-        String.raw`    ALT<`,
-        String.raw`        P.doubleQuotedString`,
-        String.raw`        | P.numberExponential`,
-        String.raw`        | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐`,
-        String.raw`          | SEQ<                                                                       |`,
-        String.raw`          |     /\{\s*/                                                                |`,
-        String.raw`          |     SEQ<                                                                   |`,
-        String.raw`          |         SEQ<                                                               |`,
-        String.raw`          |             P.doubleQuotedString                                           |`,
-        String.raw`          |             /\s*:\s*/                                                      |`,
-        String.raw`          |             <...>                                                          |`,
-        String.raw`          |         > -> map<(...) => { ... }>                                         |`,
-        String.raw`          |         SEQ<                                                               |`,
-        String.raw`          |             /\s*,\s*/                                                      |`,
-        String.raw`          |             SEQ<                                                           |`,
-        String.raw`          |                 P.doubleQuotedString                                       |`,
-        String.raw`          |                 /\s*:\s*/                                                  |`,
-        String.raw`          |                 <...>                                                      |`,
-        String.raw`          |             > -> map<(...) => { ... }>                                     |`,
-        String.raw`          |         > -> map<([_, v]) => v>*                                           |`,
-        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> |`,
-        String.raw`          |     ┌─[ Last valid parser ]─┐                                              |`,
-        String.raw`          |     | /\s*}/                |                                              |`,
-        String.raw`          |     └───────────────────────┘                                              |`,
-        String.raw`          | > -> map<([_0, object, _2]) => object>                                     |`,
-        String.raw`          └────────────────────────────────────────────────────────────────────────────┘`,
-        String.raw`        | ┌─[ Array ]─────────────────────────────────────────┐`,
-        String.raw`          | SEQ<                                              |`,
-        String.raw`          |     /\[\s*/                                       |`,
-        String.raw`          |     SEQ<                                          |`,
-        String.raw`          |         <...>                                     |`,
-        String.raw`          |         SEQ<                                      |`,
-        String.raw`          |             /\s*,\s*/                             |`,
-        String.raw`          |             <...>                                 |`,
-        String.raw`          |         > -> map<([_, v]) => v>*                  |`,
-        String.raw`          |     > -> map<([first, rest]) => [first, ...rest]> |`,
-        String.raw`          |     /\s*\]/                                       |`,
-        String.raw`          | > -> map<([_0, values, _2]) => values>            |`,
-        String.raw`          └───────────────────────────────────────────────────┘`,
-        String.raw`        | "true" -> map<() => true>`,
-        String.raw`        | "false" -> map<() => false>`,
-        String.raw`        | "null" -> map<() => null>`,
-        String.raw`    >`,
-    ].map(v => v + "\n").join(""))
+        String.raw`    ┌─[ Json ]─────────────────────────────────────────────────────────────────────────────┐`,
+        String.raw`    | ALT<                                                                                 |`,
+        String.raw`    |     P.doubleQuotedString                                                             |`,
+        String.raw`    |     | P.numberExponential                                                            |`,
+        String.raw`    |     | ┌─[ Object ]─────────────────────────────────────────────────────────────────┐ |`,
+        String.raw`    |       | SEQ<                                                                       | |`,
+        String.raw`    |       |     /\{\s*/                                                                | |`,
+        String.raw`    |       |     SEQ<                                                                   | |`,
+        String.raw`    |       |         SEQ<                                                               | |`,
+        String.raw`    |       |             P.doubleQuotedString                                           | |`,
+        String.raw`    |       |             /\s*:\s*/                                                      | |`,
+        String.raw`    |       |             ┌─[ Json ]─┐                                                   | |`,
+        String.raw`    |       |             | <...>    |                                                   | |`,
+        String.raw`    |       |             └──────────┘                                                   | |`,
+        String.raw`    |       |         > -> map<(...) => { ... }>                                         | |`,
+        String.raw`    |       |         SEQ<                                                               | |`,
+        String.raw`    |       |             /\s*,\s*/                                                      | |`,
+        String.raw`    |       |             SEQ<                                                           | |`,
+        String.raw`    |       |                 P.doubleQuotedString                                       | |`,
+        String.raw`    |       |                 /\s*:\s*/                                                  | |`,
+        String.raw`    |       |                 ┌─[ Json ]─┐                                               | |`,
+        String.raw`    |       |                 | <...>    |                                               | |`,
+        String.raw`    |       |                 └──────────┘                                               | |`,
+        String.raw`    |       |             > -> map<(...) => { ... }>                                     | |`,
+        String.raw`    |       |         > -> map<([_, v]) => v>*                                           | |`,
+        String.raw`    |       |     > -> map<([first, rest]) => [first, ...rest]> -> map<(...) => { ... }> | |`,
+        String.raw`    |       |     ┌─[ Last valid parser ]─┐                                              | |`,
+        String.raw`    |       |     | /\s*}/                |                                              | |`,
+        String.raw`    |       |     └───────────────────────┘                                              | |`,
+        String.raw`    |       | > -> map<([_0, object, _2]) => object>                                     | |`,
+        String.raw`    |       └────────────────────────────────────────────────────────────────────────────┘ |`,
+        String.raw`    |     | ┌─[ Array ]─────────────────────────────────────────┐                          |`,
+        String.raw`    |       | SEQ<                                              |                          |`,
+        String.raw`    |       |     /\[\s*/                                       |                          |`,
+        String.raw`    |       |     SEQ<                                          |                          |`,
+        String.raw`    |       |         ┌─[ Json ]─┐                              |                          |`,
+        String.raw`    |       |         | <...>    |                              |                          |`,
+        String.raw`    |       |         └──────────┘                              |                          |`,
+        String.raw`    |       |         SEQ<                                      |                          |`,
+        String.raw`    |       |             /\s*,\s*/                             |                          |`,
+        String.raw`    |       |             ┌─[ Json ]─┐                          |                          |`,
+        String.raw`    |       |             | <...>    |                          |                          |`,
+        String.raw`    |       |             └──────────┘                          |                          |`,
+        String.raw`    |       |         > -> map<([_, v]) => v>*                  |                          |`,
+        String.raw`    |       |     > -> map<([first, rest]) => [first, ...rest]> |                          |`,
+        String.raw`    |       |     /\s*\]/                                       |                          |`,
+        String.raw`    |       | > -> map<([_0, values, _2]) => values>            |                          |`,
+        String.raw`    |       └───────────────────────────────────────────────────┘                          |`,
+        String.raw`    |     | "true" -> map<() => true>                                                      |`,
+        String.raw`    |     | "false" -> map<() => false>                                                    |`,
+        String.raw`    |     | "null" -> map<() => null>                                                      |`,
+        String.raw`    | >                                                                                    |`,
+        String.raw`    └──────────────────────────────────────────────────────────────────────────────────────┘`,
+        String.raw``,
+    ].join("\n"))
 })
 
 test("Test MathGrammar 1", async ({ page }) => {
@@ -324,87 +357,91 @@ test("Test MathGrammar 1", async ({ page }) => {
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: 5 + 10 - )30\n'
-        + '\n'
-        + 'Input: 5 + 10 - )30\n'
-        + '                ^ From here (line: 1, column: 10, offset: 9)\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    ALT<\n'
-        + '        SEQ<\n'
-        + '            ALT<\n'
-        + '                P.number -> map<v => Number(v)> -> map<v => [v]>\n'
-        + '                | SEQ<\n'
-        + '                    "("\n'
-        + '                    P.whitespaceOpt\n'
-        + '                    <...>\n'
-        + '                    P.whitespaceOpt\n'
-        + '                    ")"\n'
-        + '                > -> map<([_0, _1, entries]) => [this.#evaluate(entries)]>\n'
-        + '            >\n'
-        + '            SEQ<\n'
-        + '                P.whitespaceOpt\n'
-        + '                ALT<\n'
-        + '                    "^" -> map<(...) => { ... }>\n'
-        + '                    | "*" -> map<(...) => { ... }>\n'
-        + '                    | "/" -> map<(...) => { ... }>\n'
-        + '                    | "+" -> map<(...) => { ... }>\n'
-        + '                    | "-" -> map<(...) => { ... }>\n'
-        + '                > -> map<v => v>\n'
-        + '                P.whitespaceOpt\n'
-        + '                ^^^^^^^^^^^^^^^ Last valid parser\n'
-        + '                <...>\n'
-        + '            > -> map<(...) => { ... }>+ -> map<values => values.flatMap(v => v)>\n'
-        + '        > -> map<([term, fragment]) => [...term, ...fragment]>\n'
-        + '        | P.number -> map<v => Number(v)> -> map<v => [v]>\n'
-        + '    > -> map<v => this.#evaluate(v)>\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: 5 + 10 - )30`,
+        String.raw``,
+        String.raw`Input: 5 + 10 - )30`,
+        String.raw`                ^ From here (line: 1, column: 10, offset: 9)`,
+        String.raw``,
+        String.raw`Last valid parser matched:`,
+        String.raw`    ALT<`,
+        String.raw`        SEQ<`,
+        String.raw`            ALT<`,
+        String.raw`                P.number -> map<v => Number(v)> -> map<v => [v]>`,
+        String.raw`                | SEQ<`,
+        String.raw`                      "("`,
+        String.raw`                      P.whitespaceOpt`,
+        String.raw`                      <...>`,
+        String.raw`                      P.whitespaceOpt`,
+        String.raw`                      ")"`,
+        String.raw`                  > -> map<([_0, _1, entries]) => [this.#evaluate(entries)]>`,
+        String.raw`            >`,
+        String.raw`            SEQ<`,
+        String.raw`                P.whitespaceOpt`,
+        String.raw`                ALT<`,
+        String.raw`                    "^" -> map<(...) => { ... }>`,
+        String.raw`                    | "*" -> map<(...) => { ... }>`,
+        String.raw`                    | "/" -> map<(...) => { ... }>`,
+        String.raw`                    | "+" -> map<(...) => { ... }>`,
+        String.raw`                    | "-" -> map<(...) => { ... }>`,
+        String.raw`                > -> map<v => v>`,
+        String.raw`                ┌─[ Last valid parser ]─┐`,
+        String.raw`                | P.whitespaceOpt       |`,
+        String.raw`                └───────────────────────┘`,
+        String.raw`                <...>`,
+        String.raw`            > -> map<(...) => { ... }>+ -> map<values => values.flatMap(v => v)>`,
+        String.raw`        > -> map<([term, fragment]) => [...term, ...fragment]>`,
+        String.raw`        | P.number -> map<v => Number(v)> -> map<v => [v]>`,
+        String.raw`    > -> map<v => this.#evaluate(v)>`,
+        String.raw``,
+    ].join("\n"))
 })
 
 test("Test MathGrammar 2", async ({ page }) => {
     let error = ""
     try {
-        MathGrammar.expression.parse(`- 30 + (2 ^ (1 + 1) * 5))`)
+        MathGrammar.expression.parse(`-30 + (2 ^ (1 + 1) * 5))`)
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: -30+(2^(1 + 1)*5))\n'
-        + '\n'
-        + 'Input: -30+(2^(1 + 1)*5))\n'
-        + '                        ^ From here (line: 1, column: 18, offset: 17)\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    ALT<\n'
-        + '        SEQ<\n'
-        + '            ALT<\n'
-        + '                P.number -> map<v => Number(v)> -> map<v => [v]>\n'
-        + '                | SEQ<\n'
-        + '                    "("\n'
-        + '                    P.whitespaceOpt\n'
-        + '                    <...>\n'
-        + '                    P.whitespaceOpt\n'
-        + '                    ")"\n'
-        + '                    ^^^ Last valid parser\n'
-        + '                > -> map<([_0, _1, entries]) => [this.#evaluate(entries)]>\n'
-        + '            >\n'
-        + '            SEQ<\n'
-        + '                P.whitespaceOpt\n'
-        + '                ALT<\n'
-        + '                    "^" -> map<(...) => { ... }>\n'
-        + '                    | "*" -> map<(...) => { ... }>\n'
-        + '                    | "/" -> map<(...) => { ... }>\n'
-        + '                    | "+" -> map<(...) => { ... }>\n'
-        + '                    | "-" -> map<(...) => { ... }>\n'
-        + '                > -> map<v => v>\n'
-        + '                P.whitespaceOpt\n'
-        + '                <...>\n'
-        + '            > -> map<(...) => { ... }>+ -> map<values => values.flatMap(v => v)>\n'
-        + '        > -> map<([term, fragment]) => [...term, ...fragment]>\n'
-        + '        | P.number -> map<v => Number(v)> -> map<v => [v]>\n'
-        + '    > -> map<v => this.#evaluate(v)>\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: -30 + (2 ^ (1 + 1) * 5))`,
+        String.raw``,
+        String.raw`Input: -30 + (2 ^ (1 + 1) * 5))`,
+        String.raw`                              ^ From here (line: 1, column: 24, offset: 23)`,
+        String.raw``,
+        String.raw`Last valid parser matched:`,
+        String.raw`    ALT<`,
+        String.raw`        SEQ<`,
+        String.raw`            ALT<`,
+        String.raw`                P.number -> map<v => Number(v)> -> map<v => [v]>`,
+        String.raw`                | SEQ<`,
+        String.raw`                      "("`,
+        String.raw`                      P.whitespaceOpt`,
+        String.raw`                      <...>`,
+        String.raw`                      P.whitespaceOpt`,
+        String.raw`                      ┌─[ Last valid parser ]─┐`,
+        String.raw`                      | ")"                   |`,
+        String.raw`                      └───────────────────────┘`,
+        String.raw`                  > -> map<([_0, _1, entries]) => [this.#evaluate(entries)]>`,
+        String.raw`            >`,
+        String.raw`            SEQ<`,
+        String.raw`                P.whitespaceOpt`,
+        String.raw`                ALT<`,
+        String.raw`                    "^" -> map<(...) => { ... }>`,
+        String.raw`                    | "*" -> map<(...) => { ... }>`,
+        String.raw`                    | "/" -> map<(...) => { ... }>`,
+        String.raw`                    | "+" -> map<(...) => { ... }>`,
+        String.raw`                    | "-" -> map<(...) => { ... }>`,
+        String.raw`                > -> map<v => v>`,
+        String.raw`                P.whitespaceOpt`,
+        String.raw`                <...>`,
+        String.raw`            > -> map<(...) => { ... }>+ -> map<values => values.flatMap(v => v)>`,
+        String.raw`        > -> map<([term, fragment]) => [...term, ...fragment]>`,
+        String.raw`        | P.number -> map<v => Number(v)> -> map<v => [v]>`,
+        String.raw`    > -> map<v => this.#evaluate(v)>`,
+        String.raw``,
+    ].join("\n"))
 })
 
 test("Test MathGrammar 3", async ({ page }) => {
@@ -414,42 +451,44 @@ test("Test MathGrammar 3", async ({ page }) => {
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: 9 + (2^x*4)\n'
-        + '\n'
-        + 'Input: 9 + (2^x*4)\n'
-        + '              ^ From here (line: 1, column: 8, offset: 7)\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    ALT<\n'
-        + '        SEQ<\n'
-        + '            ALT<\n'
-        + '                P.number -> map<v => Number(v)> -> map<v => [v]>\n'
-        + '                | SEQ<\n'
-        + '                    "("\n'
-        + '                    P.whitespaceOpt\n'
-        + '                    <...>\n'
-        + '                    P.whitespaceOpt\n'
-        + '                    ")"\n'
-        + '                > -> map<([_0, _1, entries]) => [this.#evaluate(entries)]>\n'
-        + '            >\n'
-        + '            SEQ<\n'
-        + '                P.whitespaceOpt\n'
-        + '                ALT<\n'
-        + '                    "^" -> map<(...) => { ... }>\n'
-        + '                    ^^^ Last valid parser\n'
-        + '                    | "*" -> map<(...) => { ... }>\n'
-        + '                    | "/" -> map<(...) => { ... }>\n'
-        + '                    | "+" -> map<(...) => { ... }>\n'
-        + '                    | "-" -> map<(...) => { ... }>\n'
-        + '                > -> map<v => v>\n'
-        + '                P.whitespaceOpt\n'
-        + '                <...>\n'
-        + '            > -> map<(...) => { ... }>+ -> map<values => values.flatMap(v => v)>\n'
-        + '        > -> map<([term, fragment]) => [...term, ...fragment]>\n'
-        + '        | P.number -> map<v => Number(v)> -> map<v => [v]>\n'
-        + '    > -> map<v => this.#evaluate(v)>\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: 9 + (2 ^ x * 4)`,
+        String.raw``,
+        String.raw`Input: 9 + (2 ^ x * 4)`,
+        String.raw`                ^ From here (line: 1, column: 10, offset: 9)`,
+        String.raw``,
+        String.raw`Last valid parser matched:`,
+        String.raw`    ALT<`,
+        String.raw`        SEQ<`,
+        String.raw`            ALT<`,
+        String.raw`                P.number -> map<v => Number(v)> -> map<v => [v]>`,
+        String.raw`                | SEQ<`,
+        String.raw`                      "("`,
+        String.raw`                      P.whitespaceOpt`,
+        String.raw`                      <...>`,
+        String.raw`                      P.whitespaceOpt`,
+        String.raw`                      ")"`,
+        String.raw`                  > -> map<([_0, _1, entries]) => [this.#evaluate(entries)]>`,
+        String.raw`            >`,
+        String.raw`            SEQ<`,
+        String.raw`                P.whitespaceOpt`,
+        String.raw`                ALT<`,
+        String.raw`                    "^" -> map<(...) => { ... }>`,
+        String.raw`                    | "*" -> map<(...) => { ... }>`,
+        String.raw`                    | "/" -> map<(...) => { ... }>`,
+        String.raw`                    | "+" -> map<(...) => { ... }>`,
+        String.raw`                    | "-" -> map<(...) => { ... }>`,
+        String.raw`                > -> map<v => v>`,
+        String.raw`                ┌─[ Last valid parser ]─┐`,
+        String.raw`                | P.whitespaceOpt       |`,
+        String.raw`                └───────────────────────┘`,
+        String.raw`                <...>`,
+        String.raw`            > -> map<(...) => { ... }>+ -> map<values => values.flatMap(v => v)>`,
+        String.raw`        > -> map<([term, fragment]) => [...term, ...fragment]>`,
+        String.raw`        | P.number -> map<v => Number(v)> -> map<v => [v]>`,
+        String.raw`    > -> map<v => this.#evaluate(v)>`,
+        String.raw``,
+    ].join("\n"))
 })
 
 /** @type {P<any>} */
@@ -470,19 +509,20 @@ test("Test Palindrome 1", async ({ page }) => {
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: aabcba\n'
-        + '\n'
-        + 'Input: aabcba\n'
-        + '             ^ From here (line: 1, column: 7, offset: 6), end of string\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    <ALT<\n'
-        + '        /[a-z]/ => chained<f()>\n'
-        + '        ^^^^^^^ Last valid parser\n'
-        + '        | /([a-z])\\1?/\n'
-        + '    >>?\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: aabcba`,
+        String.raw``,
+        String.raw`Input: aabcba`,
+        String.raw`             ^ From here(line: 1, column: 7, offset: 6), end of string`,
+        String.raw``,
+        String.raw`Last valid parser matched: `,
+        String.raw`    < ALT < `,
+        String.raw`        / [a - z] / => chained < f() > `,
+        String.raw`        ^^^^^^^ Last valid parser`,
+        String.raw`        | /([a-z])\\1?/`,
+        String.raw`    >>? `,
+        String.raw``,
+    ].join("\n"))
 })
 
 test("Test Palindrome 2", async ({ page }) => {
@@ -492,17 +532,17 @@ test("Test Palindrome 2", async ({ page }) => {
     } catch (e) {
         error = /** @type {Error} */(e).message
     }
-    expect(error).toEqual(
-        'Could not parse: abccbax\n'
-        + '\n'
-        + 'Input: abccbax\n'
-        + '              ^ From here (line: 1, column: 8, offset: 7), end of string\n'
-        + '\n'
-        + 'Last valid parser matched:\n'
-        + '    <ALT<\n'
-        + '        /[a-z]/ => chained<f()>\n'
-        + '        ^^^^^^^ Last valid parser\n'
-        + '        | /([a-z])\\1?/\n'
-        + '    >>?\n'
-    )
+    expect(error).toEqual([
+        String.raw`Could not parse: abccbax`,
+        String.raw``,
+        String.raw`Input: abccbax`,
+        String.raw`              ^ From here(line: 1, column: 8, offset: 7), end of string`,
+        String.raw``,
+        String.raw`Last valid parser matched: `,
+        String.raw`    < ALT < `,
+        String.raw`        / [a - z] / => chained < f() > `,
+        String.raw`        ^^^^^^^ Last valid parser`,
+        String.raw`        | /([a-z])\\1?/`,
+        String.raw`    >>? `,
+    ].join("\n"))
 })
