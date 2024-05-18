@@ -24,7 +24,25 @@ test("Test 1", async ({ page }) => {
         String.raw`        └───────────────────────┘`,
         String.raw`        "beta"`,
         String.raw`    >`,
-    ].map(v => v + "\n").join(""))
+        String.raw``,
+    ].join("\n"))
+})
+
+test("Test 1 - no parser print", async ({ page }) => {
+    const p = P.seq(P.str("alpha"), P.str("beta"))
+    let error = ""
+    try {
+        p.parse("alphaUnrelated", false)
+    } catch (e) {
+        error = /** @type {Error} */(e).message
+    }
+    expect(error).toEqual([
+        String.raw`Could not parse: alphaUnrelated`,
+        String.raw``,
+        String.raw`Input: alphaUnrelated`,
+        String.raw`            ^ From here (line: 1, column: 6, offset: 5)`,
+        String.raw``,
+    ].join("\n"))
 })
 
 test("Test 2", async ({ page }) => {
@@ -67,7 +85,30 @@ test("Test 2", async ({ page }) => {
         String.raw`              "b"`,
         String.raw`          >`,
         String.raw`    >`,
-    ].map(v => v + "\n").join(""))
+        String.raw``,
+    ].join("\n"))
+})
+
+test("Test 2 - noparser print", async ({ page }) => {
+    const p = P.alt(
+        P.seq(P.str("aaa"), P.str("alpha")),
+        P.seq(P.str("aaaa"), P.str("bc")),
+        P.seq(P.str("aaaaa"), P.str("xyz")),
+        P.seq(P.str("aa"), P.str("b")),
+    )
+    let error = ""
+    try {
+        p.parse("aaaa", false)
+    } catch (e) {
+        error = /** @type {Error} */(e).message
+    }
+    expect(error).toEqual([
+        String.raw`Could not parse: aaaa`,
+        String.raw``,
+        String.raw`Input: aaaa`,
+        String.raw`           ^ From here (line: 1, column: 5, offset: 4), end of string`,
+        String.raw``,
+    ].join("\n"))
 })
 
 test("Test JsonGrammar 1", async ({ page }) => {

@@ -143,7 +143,7 @@ export default class Parsernostrum {
      * @param {String} input
      * @throws {Error} when the parser fails to match
      */
-    parse(input) {
+    parse(input, printParser = true) {
         const result = this.run(input)
         if (result.status) {
             return result.value
@@ -191,10 +191,14 @@ export default class Parsernostrum {
             + "       " + " ".repeat(offset)
             + `^ From here (line: ${position.line}, `
             + `column: ${position.column}, `
-            + `offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n\n`
-            + (result.bestParser ? "Last valid parser matched:" : "No parser matched:")
-            + bestParser
-            + "\n"
+            + `offset: ${result.bestPosition})${result.bestPosition === input.length ? ", end of string" : ""}\n`
+            + (printParser
+                ? "\n"
+                + (result.bestParser ? "Last valid parser matched:" : "No parser matched:")
+                + bestParser
+                + "\n"
+                : ""
+            )
         )
     }
 
