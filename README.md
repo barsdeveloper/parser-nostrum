@@ -62,13 +62,13 @@ P.regArray(/begin\s*(\w*)\s*(\w*)\s*end/)
 ```
 
 ### `seq(...parsers)`
-Combines parsers sequentially.
+All the parsers must match sequentially, returns an array of the results of all the parsers.
 ```JavaScript
 P.seq(P.str("hello"), P.str("world"))
 ```
 
 ### `alt(...parsers)`
-Offers alternative parsers succeeds with the result of the first matching parser.
+Succeeds with the first matched parser and returns its result.
 ```JavaScript
 P.alt(P.str("yes"), P.str("no"))
 ```
