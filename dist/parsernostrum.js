@@ -932,7 +932,6 @@ class Parsernostrum {
      */
     // @ts-expect-error
     static #joiner = v => v instanceof Array ? v.join("") : v
-    static #createEscapeable = character => String.raw`[^${character}\\]*(?:\\.[^${character}\\]*)*`
 
     // Prefedined parsers
 
@@ -1124,7 +1123,7 @@ class Parsernostrum {
     // Combinators
 
     /**
-     * @template {[Parsernostrum<any>, Parsernostrum<any>, ...Parsernostrum<any>[]]} P
+     * @template {Parsernostrum<any>[]} P
      * @param {P} parsers
      * @returns {Parsernostrum<SequenceParser<UnwrapParser<P>>>}
      */
@@ -1135,7 +1134,7 @@ class Parsernostrum {
     }
 
     /**
-     * @template {[Parsernostrum<any>, Parsernostrum<any>, ...Parsernostrum<any>[]]} P
+     * @template {Parsernostrum<any>[]} P
      * @param {P} parsers
      * @returns {Parsernostrum<AlternativeParser<UnwrapParser<P>>>}
      */
