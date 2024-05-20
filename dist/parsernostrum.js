@@ -1026,6 +1026,7 @@ class Parsernostrum {
         if (result.position !== input.length) {
             result.status = false;
         }
+        // @ts-expect-error
         return result
     }
 
