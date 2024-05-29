@@ -1,7 +1,7 @@
 {
   "name": "parsernostrum",
   "type": "module",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "A tiny LL parser combinator library for JavaScript",
   "main": "src/Parsernostrum.js",
   "types": "src/types.js",

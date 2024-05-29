@@ -361,3 +361,8 @@ export default class Parsernostrum {
         return (newline ? "\n" + indentation : "") + this.#parser.toString(context, indentation, path)
     }
 }
+
+/**
+ * @template T
+ * @typedef {Parsernostrum<MapParser<SuccessParser, T>>} ProducerParser
+ */

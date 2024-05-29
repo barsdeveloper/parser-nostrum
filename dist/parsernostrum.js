@@ -1253,4 +1253,9 @@ class Parsernostrum {
     }
 }
 
+/**
+ * @template T
+ * @typedef {Parsernostrum<MapParser<SuccessParser, T>>} ProducerParser
+ */
+
 export { Parsernostrum as default };
