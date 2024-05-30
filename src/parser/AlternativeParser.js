@@ -3,7 +3,18 @@ import Parser from "./Parser.js"
 import StringParser from "./StringParser.js"
 import SuccessParser from "./SuccessParser.js"
 
-/** @template {Parser[]} T */
+/**
+ * @template {any[]} T
+ * @typedef {T extends [infer A] ? A
+ *     : T extends [infer A, ...infer B] ? A | Union<B>
+ *     : never
+ * } Union
+ */
+
+/**
+ * @template {any[]} T
+ * @extends Parser<Union<T>>
+ */
 export default class AlternativeParser extends Parser {
 
     #parsers
@@ -11,7 +22,7 @@ export default class AlternativeParser extends Parser {
         return this.#parsers
     }
 
-    /** @param {T} parsers */
+    /** @param {Parser[]} parsers */
     constructor(...parsers) {
         super()
         this.#parsers = parsers
@@ -25,7 +36,7 @@ export default class AlternativeParser extends Parser {
      */
     parse(context, position, path, index) {
         path = this.makePath(path, index)
-        const result = Reply.makeSuccess(0, /** @type {ParserValue<T>} */(""))
+        const result = /** @type {Result<Union<T>>} */(Reply.makeSuccess(0, ""))
         for (let i = 0; i < this.#parsers.length; ++i) {
             const outcome = this.#parsers[i].parse(context, position, path, i)
             if (outcome.bestPosition > result.bestPosition) {

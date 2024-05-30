@@ -1,7 +1,7 @@
 import Reply from "../Reply.js"
 import Parser from "./Parser.js"
 
-/** @template {Parser} T */
+/** @extends Parser<""> */
 export default class Lookahead extends Parser {
 
     #parser
@@ -26,7 +26,7 @@ export default class Lookahead extends Parser {
     }
 
     /**
-     * @param {T} parser
+     * @param {Parser} parser
      * @param {Type} type
      */
     constructor(parser, type) {
@@ -40,6 +40,7 @@ export default class Lookahead extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
+     * @returns {Result<"">}
      */
     parse(context, position, path, index) {
         path = this.makePath(path, index)

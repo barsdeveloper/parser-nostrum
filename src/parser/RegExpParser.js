@@ -1,7 +1,10 @@
 import Reply from "../Reply.js"
 import Parser from "./Parser.js"
 
-/** @template T */
+/**
+ * @template T
+ * @extends Parser<T>
+ */
 export default class RegExpParser extends Parser {
 
     /** @type {RegExp} */
@@ -32,7 +35,6 @@ export default class RegExpParser extends Parser {
         backtickQuotedString: new RegExp("`(" + this.#createEscapeable("`") + ")`"),
     }
 
-
     /**
      * @param {RegExp} regexp
      * @param {(match: RegExpExecArray) => T} matchMapper
@@ -49,6 +51,7 @@ export default class RegExpParser extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
+     * @returns {Result<T>}
      */
     parse(context, position, path, index) {
         path = this.makePath(path, index)

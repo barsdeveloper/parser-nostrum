@@ -1,6 +1,11 @@
 // @ts-nocheck
 
 /**
+ * @template T
+ * @typedef {import("./Parsernostrum.js").default<T>} Parsernostrum
+ */
+
+/**
  * @typedef {{
  *     current: Parser,
  *     parent: PathNode?,
@@ -27,22 +32,6 @@
  * }} Context
  */
 
-/** @typedef {import("./parser/Parser.js").default} Parser */
-
-/**
- * @template T
- * @typedef {new (...args: any) => T} ConstructorType
- */
-
-/**
- * @template T
- * @typedef {import("./Parsernostrum.js").Parsernostrum<T>} Parsernostrum
- */
-
-/**
- * @typedef {typeof import("./Parsernostrum.js").Parsernostrum} ParsernostrumClass
- */
-
 /**
  * @template T
  * @typedef {T extends [infer A] ? A
@@ -53,28 +42,12 @@
 
 /**
  * @template T
- * @typedef {T extends [] ? []
- *     : T extends [infer First, ...infer Rest] ? [ParserValue<First>, ...ParserValue<Rest>]
- *     : T extends import("./parser/AlternativeParser.js").default<infer P> ? UnionFromArray<ParserValue<P>>
- *     : T extends import("./parser/ChainedParser.js").default<any, infer C> ? ParserValue<UnwrapParser<ReturnType<C>>>
- *     : T extends import("./parser/Label.js").default<infer T> ? ParserValue<T>
- *     : T extends import("./parser/LazyParser.js").default<infer P> ? ParserValue<P>
- *     : T extends import("./parser/Lookahead.js").default ? ""
- *     : T extends import("./parser/MapParser.js").default<any, infer P> ? P
- *     : T extends import("./parser/RegExpParser.js").default<infer V> ? V
- *     : T extends import("./parser/SequenceParser.js").default<infer P> ? ParserValue<P>
- *     : T extends import("./parser/StringParser.js").default<infer S> ? S
- *     : T extends import("./parser/TimesParser.js").default<infer P> ? ParserValue<P>[]
- *     : never
+ * @typedef {T extends import("./parser/Parser.js").default<infer R> ? R
+ *     : T extends import("./parser/MapParser.js").default<any, infer R> ? R
+ *     : T extends import("./parser/ChainedParser.js").default<any, infer R> ? R
+ *     : T extends import("./Parsernostrum.js").default<infer R> ? R
+ *     : T extends [infer A] ? [ParserValue<A>]
+ *     : T extends [infer A, ...infer B] ? [ParserValue<A>, ...ParserValue<B>]
+ *     : any
  * } ParserValue
- */
-
-/**
- * @template T
- * @typedef {T extends [] ? []
- *     : T extends [infer P] ? [UnwrapParser<P>]
- *     : T extends [infer P, ...infer Rest] ? [UnwrapParser<P>, ...UnwrapParser<Rest>]
- *     : T extends import("./Parsernostrum.js").default<infer P> ? P
- *     : Parser
- * } UnwrapParser
  */

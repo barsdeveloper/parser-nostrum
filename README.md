@@ -14,7 +14,6 @@ Import Parsernostrum and use it to create custom parsers tailored to your specif
 import P from "parsernostrum"
 
 // Create a parser
-/** @type {P<any>} */
 const dateParser = P.seq(
     P.reg(/\d{4,}/).map(Number),
     P.str("-"),
@@ -22,11 +21,10 @@ const dateParser = P.seq(
     P.str("-"),
     P.reg(/\d\d/).map(Number),
 )
-    .map(([y, _1, m, _2, d]) => [y, m, d])
     .assert(([y, _1, m, _2, d]) =>
-        m >= 1 && m <= 12
-        && d >= 1 && d <= 31 && (m !== 2 || d <= 29)
+        m >= 1 && m <= 12 && d >= 1 && d <= 31 && (m !== 2 || d <= 29)
     )
+    .map(([y, _1, m, _2, d]) => new Date(y, m - 1, d))
 
 // Use the parsing methods to check the text
 try {
@@ -38,7 +36,7 @@ try {
 // This method returns an object with status (can be used as a boolean to check if success) and value keys
 let result = dateParser.run("Also not a date")
 console.log(result.value) // null
-console.log(dateParser.parse("2024-03-21")) // [2024, 3, 21]
+console.log(dateParser.parse("2024-03-21").toString()) // Thu Mar 21 2024 00:00:00 GMT+0100 (Central European Standard Time)
 ```
 
 ## Documentation

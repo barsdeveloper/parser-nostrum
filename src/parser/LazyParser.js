@@ -1,11 +1,14 @@
 import Parser from "./Parser.js"
 
-/** @template {Parser} T */
+/**
+ * @template T
+ * @extends Parser<T>
+ */
 export default class LazyParser extends Parser {
 
     #parser
 
-    /** @type {T} */
+    /** @type {Parser<T>} */
     #resolvedPraser
 
     /** @param {() => Parsernostrum<T>} parser */
@@ -47,6 +50,7 @@ export default class LazyParser extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
+     * @returns {Result<T>}
      */
     parse(context, position, path, index) {
         this.resolve()

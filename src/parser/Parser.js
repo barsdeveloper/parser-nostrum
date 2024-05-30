@@ -1,5 +1,6 @@
 import Reply from "../Reply.js"
 
+/** @template T */
 export default class Parser {
 
     static indentation = "    "
@@ -86,7 +87,7 @@ export default class Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
-     * @returns {Result<ParserValue<any>>}
+     * @returns {Result<T>}
      */
     parse(context, position, path, index) {
         return null

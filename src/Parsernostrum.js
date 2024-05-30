@@ -15,12 +15,12 @@ import StringParser from "./parser/StringParser.js"
 import SuccessParser from "./parser/SuccessParser.js"
 import TimesParser from "./parser/TimesParser.js"
 
-/** @template {Parser} T */
+/** @template T */
 export default class Parsernostrum {
 
     #parser
 
-    /** @type {(new (parser: Parser) => Parsernostrum<typeof parser>) & typeof Parsernostrum} */
+    /** @type {(new (parser: Parser) => Parsernostrum<T>) & typeof Parsernostrum} */
     Self
 
     static lineColumnFromOffset(string, offset) {
@@ -29,9 +29,9 @@ export default class Parsernostrum {
         const column = lines[lines.length - 1].length + 1
         return { line, column }
     }
-    /** @param {[any, ...any]|RegExpExecArray} param0 */
+    /** @param {[any, ...any] | RegExpExecArray} param0 */
     static #firstElementGetter = ([v, _]) => v
-    /** @param {[any, any, ...any]|RegExpExecArray} param0 */
+    /** @param {[any, any, ...any] | RegExpExecArray} param0 */
     static #secondElementGetter = ([_, v]) => v
     static #arrayFlatter = ([first, rest]) => [first, ...rest]
     /**
@@ -51,6 +51,7 @@ export default class Parsernostrum {
     static numberInteger = this.reg(RegExpParser.common.numberInteger).map(Number)
 
     /** Parser accepting any digits only number and returns a BigInt */
+    // @ts-expect-error
     static numberBigInteger = this.reg(this.numberInteger.getParser().parser.regexp).map(BigInt)
 
     /** Parser accepting any digits only number */
@@ -89,7 +90,7 @@ export default class Parsernostrum {
     /** Parser accepting a backtick quoted string and returns the content */
     static backtickQuotedString = this.reg(RegExpParser.common.backtickQuotedString, 1)
 
-    /** @param {T} parser */
+    /** @param {Parser<T>} parser */
     constructor(parser, optimized = false) {
         this.#parser = parser
     }
@@ -126,17 +127,13 @@ export default class Parsernostrum {
         return this.#parser
     }
 
-    /**
-     * @param {String} input
-     * @returns {Result<ParserValue<T>>}
-     */
+    /** @param {String} input */
     run(input) {
         const result = this.#parser.parse(Reply.makeContext(this, input), 0, Reply.makePathNode(), 0)
         if (result.position !== input.length) {
             result.status = false
         }
-        // @ts-expect-error
-        return result
+        return /** @type {Result<T>} */(result)
     }
 
     /**
@@ -233,28 +230,25 @@ export default class Parsernostrum {
     // Combinators
 
     /**
-     * @template {Parsernostrum<any>[]} P
+     * @template {Parsernostrum[]} P
      * @param {P} parsers
-     * @returns {Parsernostrum<SequenceParser<UnwrapParser<P>>>}
+     * @returns {Parsernostrum<ParserValue<P>>}
      */
     static seq(...parsers) {
-        const results = new this(new SequenceParser(...parsers.map(p => p.getParser())))
-        // @ts-expect-error
-        return results
+        return new this(new SequenceParser(...parsers.map(p => p.getParser())))
     }
 
     /**
-     * @template {Parsernostrum<any>[]} P
+     * @template {Parsernostrum[]} P
      * @param {P} parsers
-     * @returns {Parsernostrum<AlternativeParser<UnwrapParser<P>>>}
+     * @returns {Parsernostrum<UnionFromArray<ParserValue<P>>>}
      */
     static alt(...parsers) {
-        // @ts-expect-error
         return new this(new AlternativeParser(...parsers.map(p => p.getParser())))
     }
 
     /**
-     * @template {Parsernostrum<any>} P
+     * @template {Parsernostrum} P
      * @param {P} parser
      */
     static lookahead(parser) {
@@ -262,9 +256,9 @@ export default class Parsernostrum {
     }
 
     /**
-     * @template {Parsernostrum<any>} P
+     * @template {Parsernostrum} P
      * @param {() => P} parser
-     * @returns {Parsernostrum<LazyParser<UnwrapParser<P>>>}
+     * @returns {Parsernostrum<ParserValue<P>>}
      */
     static lazy(parser) {
         return new this(new LazyParser(parser))
@@ -296,7 +290,7 @@ export default class Parsernostrum {
     }
 
     /**
-     * @template {Parsernostrum<Parser>} P
+     * @template {Parsernostrum} P
      * @param {P} separator
      */
     sepBy(separator, allowTrailing = false) {
@@ -313,29 +307,29 @@ export default class Parsernostrum {
     }
 
     /**
-     * @template P
-     * @param {(v: ParserValue<T>) => P} fn
-     * @returns {Parsernostrum<MapParser<T, P>>}
+     * @template R
+     * @param {(v: T) => R} fn
+     * @returns {Parsernostrum<R>}
      */
     map(fn) {
-        // @ts-expect-error
         return new Parsernostrum(new MapParser(this.#parser, fn))
     }
 
     /**
-     * @template {Parsernostrum<Parser>} P
-     * @param {(v: ParserValue<T>, input: String, position: Number) => P} fn
+     * @template {Parsernostrum} P
+     * @param {(v: T, input: String, position: Number) => P} fn
+     * @returns {P}
      */
     chain(fn) {
+        // @ts-expect-error
         return new Parsernostrum(new ChainedParser(this.#parser, fn))
     }
 
     /**
-     * @param {(v: ParserValue<T>, input: String, position: Number) => boolean} fn
+     * @param {(v: T, input: String, position: Number) => boolean} fn
      * @return {Parsernostrum<T>}
      */
     assert(fn) {
-        // @ts-expect-error
         return this.chain((v, input, position) => fn(v, input, position)
             ? Parsernostrum.success().map(() => v)
             : Parsernostrum.failure()
@@ -346,11 +340,12 @@ export default class Parsernostrum {
         return this.map(Parsernostrum.#joiner)
     }
 
+    /** @return {Parsernostrum<T>} */
     label(value = "") {
         return new Parsernostrum(new Label(this.#parser, value))
     }
 
-    /** @param {Parsernostrum<Parser> | Parser | PathNode} highlight */
+    /** @param {Parsernostrum | Parser | PathNode} highlight */
     toString(indentation = "", newline = false, highlight = null) {
         if (highlight instanceof Parsernostrum) {
             highlight = highlight.getParser()
@@ -361,8 +356,3 @@ export default class Parsernostrum {
         return (newline ? "\n" + indentation : "") + this.#parser.toString(context, indentation, path)
     }
 }
-
-/**
- * @template T
- * @typedef {Parsernostrum<MapParser<SuccessParser, T>>} ProducerParser
- */

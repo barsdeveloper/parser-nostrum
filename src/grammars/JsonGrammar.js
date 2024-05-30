@@ -1,7 +1,4 @@
-import Parser from "../parser/Parser.js"
-import Parsernostrum from "../Parsernostrum.js"
-
-const P = Parsernostrum
+import P from "../Parsernostrum.js"
 
 export default class JsonGrammar {
 
@@ -10,7 +7,6 @@ export default class JsonGrammar {
     static #false = P.str("false").map(() => false)
     static #string = P.doubleQuotedString
     static #number = P.numberExponential
-    /** @type {Parsernostrum<Parser>} */
     static #array = P.seq(
         P.reg(/\[\s*/),
         P.lazy(() => this.json).sepBy(P.reg(/\s*,\s*/)),
@@ -18,7 +14,7 @@ export default class JsonGrammar {
     )
         .map(([_0, values, _2]) => values)
         .label("Array")
-    /** @type {Parsernostrum<Parser>} */
+    /** @type {P} */
     static #object = P.seq(
         P.reg(/\{\s*/),
         P.seq(
@@ -34,6 +30,7 @@ export default class JsonGrammar {
         .map(([_0, object, _2]) => object)
         .label("Object")
 
+    /** @type {P} */
     static json = P.alt(
         this.#string,
         this.#number,

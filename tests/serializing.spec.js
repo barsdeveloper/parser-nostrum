@@ -102,6 +102,7 @@ test("Test String", async ({ page }) => {
 
 test("Test Regexp", async ({ page }) => {
     const regexp1 = P.reg(/^(?:[A-Z][a-z]+\ )+/)
+    // @ts-expect-error
     expect(regexp1.toString()).toEqual(`/${regexp1.getParser().regexp.source}/`)
     expect(regexp1.toString(indentation, true, regexp1)).toEqual(String.raw`
         ┌─[ Last valid parser ]─┐
@@ -109,6 +110,7 @@ test("Test Regexp", async ({ page }) => {
         └───────────────────────┘`
     )
     const regexp2 = P.reg(/[\!@#$%^&*()\\[\]{}\-_+=~|:;"'<>,./?]/)
+    // @ts-expect-error
     expect(regexp2.toString()).toEqual(`/${regexp2.getParser().regexp.source}/`)
     expect(regexp2.toString(indentation, true, regexp2)).toEqual(String.raw`
         ┌─[ Last valid parser ]───────────────────┐

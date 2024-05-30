@@ -1,7 +1,10 @@
 import Reply from "../Reply.js"
 import Parser from "./Parser.js"
 
-/** @template {Parser[]} T */
+/**
+ * @template {any[]} T
+ * @extends Parser<T>
+ */
 export default class SequenceParser extends Parser {
 
     #parsers
@@ -9,7 +12,7 @@ export default class SequenceParser extends Parser {
         return this.#parsers
     }
 
-    /** @param  {T} parsers */
+    /** @param {Parser[]} parsers */
     constructor(...parsers) {
         super()
         this.#parsers = parsers
@@ -20,6 +23,7 @@ export default class SequenceParser extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
+     * @returns {Result<T>}
      */
     parse(context, position, path, index) {
         path = this.makePath(path, index)

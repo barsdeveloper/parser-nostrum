@@ -1,6 +1,9 @@
 import Parser from "./Parser.js"
 
-/** @template {Parser} T */
+/**
+ * @template T
+ * @extends Parser<T>
+ */
 export default class Label extends Parser {
 
     #parser
@@ -11,7 +14,7 @@ export default class Label extends Parser {
     #label = ""
 
     /**
-     * @param {T} parser
+     * @param {Parser<T>} parser
      * @param {String} label
      */
     constructor(parser, label) {

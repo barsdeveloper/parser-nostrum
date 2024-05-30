@@ -1,8 +1,9 @@
 import Parser from "./Parser.js"
 
 /**
- * @template {Parser} T
- * @template {(v: ParserValue<T>, input: String, position: Number) => Parsernostrum<Parser>} C
+ * @template S
+ * @template T
+ * @extends Parser<T>
  */
 export default class ChainedParser extends Parser {
 
@@ -14,8 +15,8 @@ export default class ChainedParser extends Parser {
     #fn
 
     /**
-     * @param {T} parser
-     * @param {C} chained
+     * @param {Parser<S>} parser
+     * @param {(v: S, input: String, position: Number) => Parsernostrum<T>} chained
      */
     constructor(parser, chained) {
         super()
@@ -28,7 +29,7 @@ export default class ChainedParser extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
-     * @returns {Result<ParserValue<UnwrapParser<ReturnType<C>>>>}
+     * @returns {Result<T>}
      */
     parse(context, position, path, index) {
         path = this.makePath(path, index)
@@ -37,10 +38,9 @@ export default class ChainedParser extends Parser {
             // @ts-expect-error
             return outcome
         }
-        // @ts-expect-error
         const result = this.#fn(outcome.value, context.input, outcome.position)
             .getParser()
-            .parse(context, outcome.position)
+            .parse(context, outcome.position, path, 0)
         if (outcome.bestPosition > result.bestPosition) {
             result.bestParser = outcome.bestParser
             result.bestPosition = outcome.bestPosition

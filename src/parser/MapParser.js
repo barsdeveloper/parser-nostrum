@@ -2,8 +2,9 @@ import Parser from "./Parser.js"
 import RegExpParser from "./RegExpParser.js"
 
 /**
- * @template {Parser} T
- * @template P
+ * @template S
+ * @template T
+ * @extends Parser<T>
  */
 export default class MapParser extends Parser {
 
@@ -18,8 +19,8 @@ export default class MapParser extends Parser {
     }
 
     /**
-     * @param {T} parser
-     * @param {(v: ParserValue<P>) => P} mapper
+     * @param {Parser<S>} parser
+     * @param {(v: S) => T} mapper
      */
     constructor(parser, mapper) {
         super()
@@ -45,12 +46,14 @@ export default class MapParser extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
-     * @returns {Result<P>}
+     * @returns {Result<T>}
      */
     parse(context, position, path, index) {
         path = this.makePath(path, index)
-        const result = this.#parser.parse(context, position, path, 0)
+        // @ts-expect-error
+        const result = /** @type {Result<T>} */(this.#parser.parse(context, position, path, 0))
         if (result.status) {
+            // @ts-expect-error
             result.value = this.#mapper(result.value)
         }
         return result

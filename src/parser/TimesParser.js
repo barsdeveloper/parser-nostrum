@@ -1,7 +1,10 @@
 import Reply from "../Reply.js"
 import Parser from "./Parser.js"
 
-/** @template {Parser} T */
+/**
+ * @template T
+ * @extends Parser<T[]>
+ */
 export default class TimesParser extends Parser {
 
     #parser
@@ -19,7 +22,7 @@ export default class TimesParser extends Parser {
         return this.#max
     }
 
-    /** @param {T} parser */
+    /** @param {Parser<T>} parser */
     constructor(parser, min = 0, max = Number.POSITIVE_INFINITY) {
         super()
         if (min > max) {
@@ -35,6 +38,7 @@ export default class TimesParser extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
+     * @returns {Result<T[]>}
      */
     parse(context, position, path, index) {
         path = this.makePath(path, index)
@@ -53,9 +57,11 @@ export default class TimesParser extends Parser {
                 }
                 break
             }
+            // @ts-expect-error
             result.value.push(outcome.value)
             result.position = outcome.position
         }
+        // @ts-expect-error
         return result
     }
 

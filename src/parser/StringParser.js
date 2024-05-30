@@ -20,6 +20,7 @@ export default class StringParser extends Parser {
      * @param {Number} position
      * @param {PathNode} path
      * @param {Number} index
+     * @returns {Result<String>}
      */
     parse(context, position, path, index) {
         path = this.makePath(path, index)

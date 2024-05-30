@@ -1,6 +1,4 @@
-import Parsernostrum from "../Parsernostrum.js"
-
-const P = Parsernostrum
+import P from "../Parsernostrum.js"
 
 export default class MathGrammar {
 
@@ -67,7 +65,7 @@ export default class MathGrammar {
                 })),
             ).map(v => v),
             P.whitespaceOpt,
-            MathGrammar.expressionFragment,
+            MathGrammar.#expressionFragment,
         )
             .map(([_0, operator, _2, expressionFragment]) => [operator, ...expressionFragment])
             .atLeast(1)
@@ -80,13 +78,13 @@ export default class MathGrammar {
             P.seq(
                 P.str("("),
                 P.whitespaceOpt,
-                P.lazy(() => MathGrammar.expressionFragment),
+                P.lazy(() => MathGrammar.#expressionFragment),
                 P.whitespaceOpt,
                 P.str(")"),
             ).map(([_0, _1, entries]) => [this.#evaluate(entries)])
         ))
 
-    static expressionFragment = P.alt(
+    static #expressionFragment = P.alt(
         P.seq(
             MathGrammar.#termFragment,
             MathGrammar.#opFragment,
@@ -94,5 +92,6 @@ export default class MathGrammar {
         MathGrammar.#number.map(v => [v]),
     )
 
-    static expression = MathGrammar.expressionFragment.map(v => this.#evaluate(v))
+    /** @type {P<Number>} */
+    static expression = MathGrammar.#expressionFragment.map(v => this.#evaluate(v))
 }

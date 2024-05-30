@@ -5,10 +5,6 @@ export default class RegExpValueParser extends RegExpParser {
 
     /** @param {RegExp} regexp */
     constructor(regexp, group = 0) {
-        super(
-            regexp,
-            /** @param {RegExpExecArray} match */
-            match => match[group]
-        )
+        super(regexp, match => match[group])
     }
 }
