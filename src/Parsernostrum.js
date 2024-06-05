@@ -283,23 +283,33 @@ export default class Parsernostrum {
         return this.times(0, n)
     }
 
-    /** @returns {Parsernostrum<T?>} */
-    opt() {
+    /**
+     * @param {any} emptyResult
+     * @returns {Parsernostrum<T?>}
+     */
+    opt(emptyResult = "") {
+        let success = Parsernostrum.success()
+        if (emptyResult !== "") {
+            success = success.map(() => emptyResult)
+        }
         // @ts-expect-error
-        return Parsernostrum.alt(this, Parsernostrum.success())
+        return Parsernostrum.alt(this, success)
     }
 
     /**
      * @template {Parsernostrum} P
      * @param {P} separator
      */
-    sepBy(separator, allowTrailing = false) {
-        const results = Parsernostrum.seq(
+    sepBy(separator, atLeast = 1, allowTrailing = false) {
+        let result = Parsernostrum.seq(
             this,
-            Parsernostrum.seq(separator, this).map(Parsernostrum.#secondElementGetter).many()
-        )
-            .map(Parsernostrum.#arrayFlatter)
-        return results
+            Parsernostrum.seq(separator, this).map(Parsernostrum.#secondElementGetter).atLeast(atLeast - 1),
+            ...(allowTrailing ? [separator.opt([])] : [])
+        ).map(Parsernostrum.#arrayFlatter)
+        if (atLeast === 0) {
+            result = result.opt([])
+        }
+        return result
     }
 
     skipSpace() {
